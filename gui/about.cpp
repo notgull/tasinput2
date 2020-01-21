@@ -23,13 +23,13 @@
 #include <wx/wx.h>
 
 void ShowAboutDialog(void *parent) {
-  wxDialog *dummy = new wxDialog();
-  dummy->AssociateHandle(parent);
+//  wxDialog *dummy = new wxDialog();
+//  dummy->AssociateHandle(parent);
 
   wxMessageBox(
     "\ntasinput2 v1.0.0 by not_a_seagull\nBased on Direct Input by Def, modifications by Nitsuja and not_a_seagull",
     "About",
-    wxOK | wxICON_INFORMATION,
-    dummy
+    wxOK | wxICON_INFORMATION
+//    dummy
   );
 }

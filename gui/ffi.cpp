@@ -24,6 +24,6 @@
 
 extern "C" {
   void show_about_box(void *parent_ptr) {
-    ShowAboutBox(parent_ptr);
+    ShowAboutDialog(parent_ptr);
   }
 }

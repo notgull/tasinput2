@@ -7,14 +7,9 @@ edition = "2018"
 [lib]
 name = "tasinput2"
 crate-type = ["staticlib", "cdylib"]
+path = "src/lib.rs"
 
 [dependencies]
 
 [build-dependencies]
 cc = "1.0.50"
-
-[target.x86_64-pc-windows-msvc]
-linker = "msvc-wine-rust/linker-scripts/linkx64.sh"
-
-[target.i686-pc-windows-msvc]
-linker = "msvc-wine-rust/linker-scripts/linkx32.sh"

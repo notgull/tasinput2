@@ -20,6 +20,8 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+//! A new version of the tasinput plugin, designed to make TASing faster.
+
 mod plugin_info;
 
 use plugin_info::PluginInfo;
