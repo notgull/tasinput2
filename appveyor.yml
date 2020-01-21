@@ -22,6 +22,7 @@ install:
  - appveyor DownloadFile https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.3/wxWidgets-3.1.3-headers.7z -FileName wx-include.7z
  - 7z e -y wx-include.7z
  - del wx-include.7z
+ - ps: ls -al
  - cd %APPVEYOR_BUILD_FOLDER%
 # build wx-config
  - git clone https://github.com/kowey/wx-config-win.git
