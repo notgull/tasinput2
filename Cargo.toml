@@ -3,6 +3,7 @@ name = "tasinput2"
 version = "0.1.0"
 authors = ["not_a_seagull <notaseagull048@gmail.com>"]
 edition = "2018"
+license = "GPL-3.0-or-later"
 
 [lib]
 name = "tasinput2"
@@ -13,3 +14,6 @@ path = "src/lib.rs"
 
 [build-dependencies]
 cc = "1.0.50"
+
+[badges]
+appveyor = { repository = "not-a-seagull/tasinput2", branch = "master", service = "github" }
