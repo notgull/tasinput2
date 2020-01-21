@@ -18,6 +18,7 @@ install:
  - ps: Expand-Archive -Path 'wx.zip' -DestinationPath $env:WXWIN
  - cd %WXWIN%\build\msw
  - set PATH=C:\MinGW\bin;%PATH%
+ - echo %PATH%
  - mingw32-make -f makefile.gcc SHARED=1 UNICODE=1 BUILD=release clean
  - mingw32-make -f makefile.gcc SHARED=1 UNICODE=1 BUILD=release
 
