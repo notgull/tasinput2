@@ -28,7 +28,7 @@ install:
  - 7z e -y wx-include.7z
  - del wx-include.7z
  - cd %WXWIN%
- - ps: ls
+ - ps: ls include\wx
  - cd %APPVEYOR_BUILD_FOLDER%
 # build wx-config
  - git clone https://github.com/kowey/wx-config-win.git
