@@ -1,8 +1,6 @@
 /*
  * src/plugin_info.rs
- *
- * tasinput2 - Input plugin for generating tool assisted speedruns
- * Copyright (C) 2020 not_a_seagull
+ * tasinput2 - Plugin for creating TAS inputs
  *
  * This file is part of tasinput2.
  *
@@ -22,17 +20,16 @@
 
 use std::os::raw::c_char;
 
-/// Represents plugin information, a structure passed into the library to acquire information regarding the plugin.
+/// The information required of a plugin.
 #[repr(C)]
 pub struct PluginInfo {
-    /// The version of the plugin. This will be set to 0x0200, an increment from tasinput1.
+    /// The version of the plugin that we are using.
     pub version: u16,
-    /// The type of plugin that this is. Should be set to PLUGIN_TYPE_CONTROLLER
+    /// The type of plugin (should always be 4).
     pub plugin_type: u16,
-    /// The name of this library. Represents a C-level string
+    /// The name of the plugin
     pub name: *mut c_char,
-    // reserved keywords.
-    // note: these are BOOLs, which are signed ints in minwindef.h
+    // reserved values, BOOLs are i32's
     reserved1: i32,
     reserved2: i32,
 }

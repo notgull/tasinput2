@@ -1,8 +1,6 @@
 /*
- * gui/ffi.cpp
- *
- * tasinput2 - Input plugin for generating tool assisted speedruns
- * Copyright (C) 2020 not_a_seagull
+ * src/controller/error.rs
+ * tasinput2 - Plugin for creating TAS inputs
  *
  * This file is part of tasinput2.
  *
@@ -20,10 +18,17 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "about.h"
+use super::ControllerCommand;
+use std::sync::mpsc::{RecvError, SendError};
+use thiserror::Error;
 
-extern "C" {
-  void show_about_box(void *parent_ptr) {
-    ShowAboutDialog(parent_ptr);
-  }
+/// An error that could occur from interfacing with the controller.
+#[derive(Debug, Error)]
+pub enum ControllerError {
+    #[error("Unable to send data to thread")]
+    Send(#[from] SendError<ControllerCommand>),
+    #[error("Unable to receive data from master thread")]
+    Recv(#[from] RecvError),
+    #[error("An unspecified error occurred: {0}")]
+    StaticMsg(&'static str),
 }

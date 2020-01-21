@@ -1,8 +1,6 @@
 /*
- * gui/about.h
- *
- * tasinput2 - Input plugin for generating tool assisted speedruns
- * Copyright (C) 2020 not_a_seagull
+ * src/gui/mod.rs
+ * tasinput2 - Plugin for creating TAS inputs
  *
  * This file is part of tasinput2.
  *
@@ -20,4 +18,12 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-void ShowAboutDialog(void *parent);
+use qt_widgets::QApplication;
+
+pub fn start_application() {
+    QApplication::init(|_| unsafe { QApplication::exec() });
+}
+
+pub fn close_application() {
+    //    QApplication::quit();
+}

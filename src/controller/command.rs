@@ -1,8 +1,6 @@
 /*
- * src/lib.rs
- *
- * tasinput2 - Input plugin for generating tool assisted speedruns
- * Copyright (C) 2020 not_a_seagull
+ * src/controller/command.rs
+ * tasinput2 - Plugin for creating TAS inputs
  *
  * This file is part of tasinput2.
  *
@@ -20,16 +18,11 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <wx/wx.h>
-
-void ShowAboutDialog(void *parent) {
-//  wxDialog *dummy = new wxDialog();
-//  dummy->AssociateHandle(parent);
-
-  wxMessageBox(
-    "\ntasinput2 v1.0.0 by not_a_seagull\nBased on Direct Input by Def, modifications by Nitsuja and not_a_seagull",
-    "About",
-    wxOK | wxICON_INFORMATION
-//    dummy
-  );
+/// Represents a command to be sent to and from the controller threads.
+pub enum ControllerCommand {
+    /// No command; shouldn't truly be used in practice.
+    #[deprecated(since = "0.1.0", note = "No-ops shouldn't be used in practice")]
+    NoOp,
+    /// End the current thread.
+    End,
 }

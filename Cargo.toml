@@ -1,15 +1,15 @@
 [package]
 name = "tasinput2"
-version = "0.1.0"
-authors = ["not_a_seagull <notaseagull048@gmail.com>"]
+version = "0.1.2"
+authors = ["not_a_seagull <jtnunley01@gmail.com>"]
 edition = "2018"
 
 [lib]
 name = "tasinput2"
-crate-type = ["staticlib", "cdylib"]
 path = "src/lib.rs"
+crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
-
-[build-dependencies]
-cc = "1.0.50"
+bitflags = "1.2.1"
+qt_widgets = "0.4.1"
+thiserror = "1.0.9"

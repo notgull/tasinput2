@@ -1,26 +1,32 @@
+# Description of how to build this program using the Appveyor CI
+
+# Use the Visual Studio 2015 disk image- is a good build of windows that comes with QT utilities
 os: Visual Studio 2015
 
+# Load the Rust stable toolchain and the MSVC toolchain - we'll add more later
 environment:
   matrix:
-   - channel: nightly
-     target: x86_64-pc-windows-msvc
-  WXWIN: C:\wxWidgets
+    - channel: stable
+      target: x86_64-pc-windows-gnu
+  CC: x86_64-w64-mingw32-gcc
+  CMAKE_C_COMPILER: x86_64-w64-mingw32-gcc
+  CMAKE_CXX_COMPILER: x86_64-w64-mingw32-g++
+  QTDIRS: C:\Qt\5.11.3\mingw53_32\bin
 
+# Install the desired version of Rust and set up the path.
 install:
-# install rust
- - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
- - rustup-init -yv --default-toolchain %channel% --default-host %target%
- - set PATH=%PATH%;%USERPROFILE%\.cargo\bin
- - rustc -vV
- - cargo -vV
-# build wx
- - appveyor DownloadFile https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.3/wxWidgets-3.1.3.7z -FileName wx.7z
- - 7z e wx.7z -y -o%WXWIN%
- - cd %WXWIN%\build\msw
- - "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
- - nmake.exe -f makefile.vc BUILD=release
+  - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+  - rustup-init -yv --default-toolchain %channel% --default-host %target%
+  - set PATH=%PATH%;%USERPROFILE%\.cargo\bin;C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin;%QTDIRS%
+  - rustc -vV
+  - cargo -vV
+  - rustfmt -vV
+  - qmake -query QT_VERSION
+  - ps: Start-Process "cmd.exe" "/c where sh.exe" | Remove-Item
 
+# Cargo test takes care of the build process, so we don't need a build phase
 build: false
 
 test_script:
- - cargo test --verbose
+  - rustfmt --check src/lib.rs
+  - cargo test
