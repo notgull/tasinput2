@@ -17,7 +17,8 @@ install:
  - appveyor DownloadFile https://github.com/wxWidgets/wxWidgets/releases/download/v3.1.3/wxWidgets-3.1.3.zip -FileName wx.zip
  - ps: Expand-Archive -Path 'wx.zip' -DestinationPath $env:WXWIN
  - cd %WXWIN%\build\msw
- - ps: "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\""
+ - ps: Start-Process "cmd.exe" "\c "\C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\""
+ - '"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x86'
  - nmake.exe -f makefile.vc BUILD=release
 
 build: false
