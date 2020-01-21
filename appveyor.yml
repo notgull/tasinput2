@@ -18,6 +18,7 @@ install:
 # build wx-config
  - git clone https://github.com/kowey/wx-config-win.git
  - cd wx-config-win
+ - set PATH=C:\MinGW\bin;%PATH
  - mingw32-g++ wx-config-win.cpp -s -o wx-config.exe
  - set PATH=%PATH%;%cd%
  - cd %APPVEYOR_BUILD_FOLDER%
