@@ -4,7 +4,7 @@ environment:
   matrix:
    - channel: nightly
      target: x86_64-pc-windows-gnu
-  WXWIN: C:\wxWidgets
+  WXWIN: C:\wxWidgets3.1.2
 
 install:
 # install rust
