@@ -8,7 +8,7 @@ environment:
   matrix:
     - channel: stable
       target: x86_64-pc-windows-gnu
-  CC: mingw64-gcc
+  CC: mingw32-gcc
 
 # Install the desired version of Rust and set up the path.
 install:
