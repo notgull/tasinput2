@@ -1,3 +1,0 @@
-[submodule "msvc-wine-rust"]
-	path = msvc-wine-rust
-	url = https://github.com/est31/msvc-wine-rust.git
