@@ -18,7 +18,7 @@ install:
   - rustc -vV
   - cargo -vV
   - rustfmt -vV
-  - dir C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0
+  - dir C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64
 
 # Cargo test takes care of the build process, so we don't need a build phase
 build: false
