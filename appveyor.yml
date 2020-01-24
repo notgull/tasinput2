@@ -19,6 +19,7 @@ install:
   - rustc -vV
   - cargo -vV
   - rustfmt -vV
+  - dir %QTDIRS%
   - qmake -query QT_VERSION
 
 # Cargo test takes care of the build process, so we don't need a build phase
