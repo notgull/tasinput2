@@ -17,7 +17,7 @@ jobs:
      - run: cargo fmt -- --check
   
   test:
-    name: Check
+    name: Test
     runs-on: windows-latest
     strategy:
       matrix:
@@ -35,6 +35,7 @@ jobs:
      - run: cargo test
 
   deploy:
+    name: Deploy
     needs: test
     runs-on: windows-latest
     steps:
