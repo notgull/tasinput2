@@ -1,4 +1,4 @@
-name: CI
+name: build
 
 on: [push, pull_request]
 
@@ -27,4 +27,8 @@ jobs:
        run: rustup update ${{ matrix.toolchain }}
      - name: Set Rust Default Toolchain
        run: rustup default ${{ matrix.toolchain }}
+     - name: Install Qt
+       uses: jurplel/install-qt-action@v2.3.0
+       with:
+         host: ${{ maxtrix.os }} 
      - run: cargo test
