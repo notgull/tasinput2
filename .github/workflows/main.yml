@@ -28,5 +28,5 @@ jobs:
      - name: Set Rust Default Toolchain
        run: rustup default ${{ matrix.toolchain }}
      - name: Install Qt
-       uses: jurplel/install-qt-action@v2.3.0
+       uses: jurplel/install-qt-action@v2
      - run: cargo test
