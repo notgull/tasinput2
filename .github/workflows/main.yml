@@ -24,5 +24,7 @@ jobs:
     steps:
      - uses: actions/checkout@master
      - name: Install Rust
-       run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+       run: rustup update ${{ matrix.toolchain }}
+     - name: Set Rust Default Toolchain
+       run: rustup default ${{ matrix.toolchain }}
      - run: cargo test
