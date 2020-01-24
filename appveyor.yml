@@ -9,7 +9,7 @@ environment:
     - channel: stable
       target: x86_64-pc-windows-gnu
   CC: x86_64-w64-mingw32-gcc
-  QTDIRS: C:\Qt\5.5\mingw492_32;C:\Qt\Tools\mingw492_32
+  QTDIRS: C:\Qt\5.11.3\mingw53_32
 
 # Install the desired version of Rust and set up the path.
 install:
