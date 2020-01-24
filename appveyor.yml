@@ -22,7 +22,7 @@ install:
   - cargo -vV
   - rustfmt -vV
   - qmake -query QT_VERSION
-  - ps: Remove-Item (& "where sh.exe")
+  - ps: Remove-Item (& "where" "sh.exe")
 
 # Cargo test takes care of the build process, so we don't need a build phase
 build: false
