@@ -68,9 +68,9 @@ fn get_byte(value: u32, byte_index: u8) -> u8 {
 fn set_bit(value: &mut u32, bit_index: u8, bit_value: bool) {
     let mask = 0x01 << bit_index;
     if bit_value {
-      *value |= mask;
+        *value |= mask;
     } else {
-      *value &= !mask;
+        *value &= !mask;
     }
 }
 

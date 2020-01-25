@@ -20,8 +20,12 @@
 
 use super::{ControllerCommand, ControllerResponse};
 use std::{
-  rc::Rc,
-  sync::{atomic::AtomicBool, mpsc::{Receiver, Sender}, Mutex}
+    rc::Rc,
+    sync::{
+        atomic::AtomicBool,
+        mpsc::{Receiver, Sender},
+        Mutex,
+    },
 };
 
 pub fn controller_manager(tx: Sender<ControllerResponse>, rx: Receiver<ControllerCommand>) {
