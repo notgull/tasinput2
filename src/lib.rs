@@ -35,6 +35,7 @@ use std::{
 };
 
 // the only safe part of the dll info: parsing the string
+#[cold]
 fn get_version_string() -> CString {
     let plugin_name = format!("TAS Input Plugin 2 v{}", env!("CARGO_PKG_VERSION"));
 

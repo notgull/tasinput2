@@ -26,15 +26,18 @@ use std::{
 
 mod command;
 mod error;
+mod manager;
+mod response;
 
 pub use command::ControllerCommand;
 pub use error::ControllerError;
+pub use response::ControllerResponse;
 
 /// Represents a controller's dialog box used to control inputs.
 pub struct Controller {
     tx: Sender<ControllerCommand>,
-    rx: Receiver<ControllerCommand>,
-    temp_tx: Option<Sender<ControllerCommand>>,
+    rx: Receiver<ControllerResponse>,
+    temp_tx: Option<Sender<ControllerResponse>>,
     temp_rx: Option<Receiver<ControllerCommand>>,
     handle: Option<JoinHandle<()>>,
 }
@@ -105,6 +108,8 @@ impl Controller {
         self.handle = Some(thread::spawn(move || {
             let tx = thread_tx;
             let rx = thread_rx;
+            manager::controller_manager(tx, rx);
+            ()
         }));
         self.temp_tx = None;
         self.temp_rx = None;
