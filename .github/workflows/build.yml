@@ -25,6 +25,10 @@ jobs:
        run: rustup update stable
      - name: Set Rust Default Toolchain
        run: rustup default stable
+     - name: Install Qt
+       uses: jurplel/install-qt-action@v2
+     - name: Install MSVC Build Tools
+       uses: ilammy/msvc-dev-cmd@v1
      - name: Install Clippy
        run: rustup component add clippy
      - run: cargo clippy
