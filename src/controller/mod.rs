@@ -109,7 +109,6 @@ impl Controller {
             let tx = thread_tx;
             let rx = thread_rx;
             manager::controller_manager(tx, rx);
-            ()
         }));
         self.temp_tx = None;
         self.temp_rx = None;
