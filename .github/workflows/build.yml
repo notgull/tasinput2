@@ -27,7 +27,7 @@ jobs:
        run: rustup default stable
      - name: Install Clippy
        run: rustup component add clippy
-     - run: cargo clippy -- --D warnings
+     - run: cargo clippy
   
   test:
     name: Test

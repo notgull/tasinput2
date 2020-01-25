@@ -117,6 +117,12 @@ impl Controller {
     }
 }
 
+impl Default for Controller {
+  fn default() -> Self {
+     Self::new()
+  }
+}
+
 pub struct ControllerData {
     window: QWidget,
     controller_id: u8,
