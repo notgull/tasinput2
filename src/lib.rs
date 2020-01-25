@@ -19,6 +19,7 @@
  */
 
 #![allow(clippy::many_single_char_names)]
+#![allow(clippy::too_many_arguments)]
 
 extern crate qt_widgets;
 extern crate thiserror;
@@ -33,6 +34,8 @@ use std::{
     ffi::{c_void, CString},
     ptr,
 };
+
+pub use controller::*;
 
 // the only safe part of the dll info: parsing the string
 #[cold]

@@ -1,5 +1,5 @@
 /*
- * src/gui/mod.rs
+ * src/state.rs
  * tasinput2 - Plugin for creating TAS inputs
  *
  * This file is part of tasinput2.
@@ -19,18 +19,8 @@
  */
 
 use crate::Controller;
-use qt_widgets::QApplication;
 
-pub fn start_application() {
-    QApplication::init(|_| unsafe {
-        for _ in 0..4 {
-            let mut controller = Controller::new();
-            controller.start_thread().unwrap();
-        }
-        QApplication::exec()
-    });
-}
-
-pub fn close_application() {
-    //    QApplication::quit();
+/// The current global state of the emulator
+pub struct ProgramState {
+    controllers: [Controller; 4]
 }

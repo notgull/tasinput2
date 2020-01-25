@@ -19,14 +19,20 @@
  */
 
 use super::{ControllerCommand, ControllerResponse};
-use std::sync::mpsc::{Receiver, Sender};
+use std::{
+  rc::Rc,
+  sync::{atomic::AtomicBool, mpsc::{Receiver, Sender}, Mutex}
+};
 
 pub fn controller_manager(tx: Sender<ControllerResponse>, rx: Receiver<ControllerCommand>) {
-    let mut continue_loop = true;
+    let continue_loop = Rc::new(Mutex::new(AtomicBool::new(true)));
 
     'threadloop: loop {
         let break_loop = |_| {
-            continue_loop = false;
+            let cloned_continue_loop = Rc::clone(&continue_loop);
+            let mut lock = cloned_continue_loop.lock().unwrap();
+            let mut data = lock.get_mut();
+            *data = false;
         };
 
         // receive the command from the receiving outlet
@@ -37,13 +43,13 @@ pub fn controller_manager(tx: Sender<ControllerResponse>, rx: Receiver<Controlle
                 .send(ControllerResponse::NoResponse)
                 .unwrap_or_else(break_loop),
             ControllerCommand::End => {
-                continue_loop = false;
+                *(continue_loop.lock().unwrap().get_mut()) = false;
                 tx.send(ControllerResponse::NoResponse)
                     .unwrap_or_else(break_loop);
             }
         }
 
-        if !continue_loop {
+        if !(*continue_loop.lock().unwrap().get_mut()) {
             break 'threadloop;
         }
     }
