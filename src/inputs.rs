@@ -62,7 +62,7 @@ fn get_bit(value: &u32, bit_index: u8) -> bool {
 fn get_byte(value: &u32, byte_index: u8) -> u8 {
     // TODO: the right way of doing this, because this is not it
     let modified_value = value >> ((byte_index * 8) as u32);
-    (modified_value & 0x000000FF).try_into().unwrap_or(0)
+    (modified_value & 0xFF).try_into().unwrap_or(0)
 }
 
 fn set_bit(value: &mut u32, bit_index: u8, bit_value: &bool) {
@@ -75,7 +75,7 @@ fn set_bit(value: &mut u32, bit_index: u8, bit_value: &bool) {
 
 fn set_byte(value: &mut u32, byte_index: u8, byte_value: &u8) {
     let shift = (byte_index * 8) as u32;
-    let mask: u32 = 0x000000FF << shift; // TODO: bitwise not
+    let mask: u32 = 0xFF << shift; // TODO: bitwise not
     let byte_value_converted = *byte_value as u32;
     *value = (byte_value_converted << shift) | (*value & mask);
 }

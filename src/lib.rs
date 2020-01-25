@@ -18,6 +18,8 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#![allow(clippy::many_single_char_names)]
+
 extern crate qt_widgets;
 extern crate thiserror;
 
