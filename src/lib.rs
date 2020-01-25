@@ -23,6 +23,7 @@ extern crate thiserror;
 
 mod controller;
 mod gui;
+mod inputs;
 mod plugin_info;
 
 use plugin_info::PluginInfo;

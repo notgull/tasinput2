@@ -42,14 +42,14 @@ pub struct Controller {
 impl Controller {
     /// Create a new instance of a controller
     pub fn new() -> Controller {
-        let (tx, rx) = mpsc::channel();
-        let (temp_tx, temp_rx) = mpsc::channel();
+        let (tx1, rx1) = mpsc::channel();
+        let (tx2, rx2) = mpsc::channel();
 
         Controller {
-            tx,
-            rx,
-            temp_tx: Some(temp_tx),
-            temp_rx: Some(temp_rx),
+            tx: tx1,
+            rx: rx2,
+            temp_tx: Some(tx2),
+            temp_rx: Some(rx1),
             handle: None,
         }
     }
@@ -71,11 +71,45 @@ impl Controller {
             return Err(ControllerError::StaticMsg("Unable to join thread"));
         }
 
-        let (new_tx, new_rx) = mpsc::channel();
-        self.temp_tx = Some(new_tx);
-        self.temp_rx = Some(new_rx);
+        let (new_tx1, new_rx1) = mpsc::channel();
+        let (new_tx2, new_rx2) = mpsc::channel();
+        self.tx = new_tx1;
+        self.rx = new_rx2;
+        self.temp_tx = Some(new_tx2);
+        self.temp_rx = Some(new_rx1);
         self.handle = None;
         Ok(true)
+    }
+
+    /// Start a controller thread.
+    pub fn start_thread(&mut self) -> Result<(), ControllerError> {
+        // if we are currently active, stop the thread
+        if self.is_active() {
+            match self.stop_thread() {
+                Err(e) => return Err(e),
+                Ok(true) => { /* no-op */ }
+                Ok(false) => return Err(ControllerError::StaticMsg("Unable to stop thread")),
+            };
+        }
+
+        // check to make sure that we have temporary mpsc's set up already
+        if self.temp_tx.is_none() || self.temp_rx.is_none() {
+            return Err(ControllerError::StaticMsg(
+                "Temporary channels are not in place",
+            ));
+        }
+
+        // start the thread
+        let thread_tx = self.temp_tx.take().unwrap();
+        let thread_rx = self.temp_rx.take().unwrap();
+        self.handle = Some(thread::spawn(move || {
+            let tx = thread_tx;
+            let rx = thread_rx;
+        }));
+        self.temp_tx = None;
+        self.temp_rx = None;
+
+        Ok(())
     }
 }
 

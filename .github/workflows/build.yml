@@ -15,6 +15,19 @@ jobs:
      - name: Install Rustfmt
        run: rustup component add rustfmt
      - run: cargo fmt -- --check
+
+  lint:
+    name: Lint
+    runs-on: windows-latest
+    steps:
+     - uses: actions/checkout@master
+     - name: Install Rust
+       run: rustup update stable
+     - name: Set Rust Default Toolchain
+       run: rustup default stable
+     - name: Install Clippy
+       run: rustup component add clippy
+     - run: cargo clippy
   
   test:
     name: Test
@@ -33,19 +46,3 @@ jobs:
      - name: Install MSVC Build Tools
        uses: ilammy/msvc-dev-cmd@v1
      - run: cargo test
-
-  deploy:
-    name: Deploy
-    needs: test
-    runs-on: windows-latest
-    steps:
-     - uses: actions/checkout@master
-     - name: Install Rust
-       run: rustup update stable
-     - name: Set Rust Default Toolchain
-       run: rustup default stable
-     - name: Install Qt
-       uses: jurplel/install-qt-action@v2
-     - name: Install MSVC Build Tools
-       uses: ilammy/msvc-dev-cmd@v1
-     - run: cargo build --release
