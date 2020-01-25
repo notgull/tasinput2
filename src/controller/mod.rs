@@ -118,9 +118,9 @@ impl Controller {
 }
 
 impl Default for Controller {
-  fn default() -> Self {
-     Self::new()
-  }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 pub struct ControllerData {
