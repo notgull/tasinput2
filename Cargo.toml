@@ -10,5 +10,6 @@ path = "src/lib.rs"
 crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
+lazy_static = "1.4.0"
 qt_widgets = "0.4.1"
 thiserror = "1.0.9"
