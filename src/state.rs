@@ -18,9 +18,13 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::Controller;
+use crate::{Controller, CONTROLLER_COUNT};
+use std::sync::{Arc, Mutex, PoisonError};
+use thiserror::Error;
 
 /// The current global state of the emulator
-pub struct ProgramState {
-    controllers: [Controller; 4]
+pub struct ProgramStateUnwrapped {
+    controllers: [Controller; CONTROLLER_COUNT as usize],
 }
+
+pub type ProgramState = Arc<Mutex<ProgramStateUnwrapped>>;

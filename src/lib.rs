@@ -21,6 +21,8 @@
 #![allow(clippy::many_single_char_names)]
 #![allow(clippy::too_many_arguments)]
 
+#[macro_use]
+extern crate lazy_static;
 extern crate qt_widgets;
 extern crate thiserror;
 
@@ -28,14 +30,19 @@ mod controller;
 mod gui;
 mod inputs;
 mod plugin_info;
+mod state;
 
 use plugin_info::PluginInfo;
 use std::{
     ffi::{c_void, CString},
     ptr,
+    sync::{Arc, Mutex},
 };
 
 pub use controller::*;
+pub use state::{ProgramState, ProgramStateUnwrapped};
+
+pub const CONTROLLER_COUNT: u32 = 4;
 
 // the only safe part of the dll info: parsing the string
 #[cold]

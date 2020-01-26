@@ -433,6 +433,7 @@ dependencies = [
 name = "tasinput2"
 version = "0.1.2"
 dependencies = [
+ "lazy_static",
  "qt_widgets",
  "thiserror",
 ]
