@@ -1,5 +1,5 @@
 /*
- * src/state.rs
+ * src/state/command.rs
  * tasinput2 - Plugin for creating TAS inputs
  *
  * This file is part of tasinput2.
@@ -18,13 +18,14 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::{Controller, CONTROLLER_COUNT};
-use std::sync::{Arc, Mutex, PoisonError};
-use thiserror::Error;
-
-/// The current global state of the emulator
-pub struct ProgramStateUnwrapped {
-    controllers: [Controller; CONTROLLER_COUNT as usize],
+/// A command to be sent to the application state.
+pub enum StateCommand {
+    /// No operation.
+    NoOp,
+    /// Stop operation.
+    End,
+    /// Start up QT thread
+    StartQT,
+    /// Quit QT thread
+    EndQT,
 }
-
-pub type ProgramState = Arc<Mutex<ProgramStateUnwrapped>>;
