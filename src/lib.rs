@@ -23,12 +23,14 @@
 
 #[macro_use]
 extern crate lazy_static;
+extern crate libc;
 extern crate qt_widgets;
 extern crate thiserror;
 
 mod controller;
 mod gui;
 mod inputs;
+mod m64compat;
 mod plugin_info;
 mod state;
 
@@ -40,7 +42,9 @@ use std::{
 };
 
 pub use controller::*;
-pub use state::{ProgramState, ProgramStateUnwrapped};
+pub use state::Tasinput2State;
+use std::os::raw::c_char;
+use std::ptr::null_mut;
 
 pub const CONTROLLER_COUNT: u32 = 4;
 
@@ -64,39 +68,40 @@ fn get_version_string() -> CString {
 /// This is called from C code, it is already unsafe.
 #[allow(non_snake_case)]
 #[no_mangle]
-pub unsafe extern "C" fn GetDllInfo(plugin_info: *mut PluginInfo) {
+pub unsafe extern "C" fn PluginGetVersion(
+    plugin_type: *mut m64compat::m64p_plugin_type,
+    plugin_version: *mut i32,
+    api_version: *mut i32,
+    plugin_name: *mut *const c_char,
+    capabilities: *mut i32,
+) -> m64compat::m64p_error {
     // an increment over the past version
-    (*plugin_info).version = 0x0200;
-    // indicate this is a controller plugin
-    (*plugin_info).plugin_type = 4;
-    // copy the version string into the plugin name
-    let version = get_version_string();
-    ptr::copy_nonoverlapping(
-        version.as_ptr(),
-        (*plugin_info).name,
-        version.to_bytes_with_nul().len(),
-    );
-}
-
-/// Initialize the DLL.
-///
-/// # Safety
-///
-/// This is called from C code, it is already unsafe.
-#[allow(non_snake_case)]
-#[no_mangle]
-pub unsafe extern "C" fn DllMain(
-    _parent_instance: *const c_void,
-    launch_reason: i32,
-    _reserved: *const c_void,
-) -> i32 {
-    match launch_reason {
-        1 /* DLL_PROCESS_ATTACH */ => gui::start_application(),
-        0 /* DLL_PROCESS_DETACH */ => gui::close_application(),
-        _ => { /* noop */ }
+    if plugin_version.is_null() {
+        *plugin_version = 0x0200;
     }
 
-    1
+    // indicate this is a controller plugin
+    if plugin_type.is_null() {
+        *plugin_type = m64compat::m64p_plugin_type_M64PLUGIN_INPUT;
+    }
+
+    // indicate the API version this expects
+    if api_version.is_null() {
+        *api_version = 0x020100;
+    }
+
+    // what capabilities does this plugin have?
+    if capabilities.is_null() {
+        *capabilities = 0;
+    }
+
+    // copy the version string into the plugin name
+    if plugin_name.is_null() {
+        let version = get_version_string();
+        *plugin_name = version.as_ptr();
+    }
+
+    m64compat::m64p_error_M64ERR_SUCCESS
 }
 
 /// Close this DLL.
