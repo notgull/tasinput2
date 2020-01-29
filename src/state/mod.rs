@@ -103,6 +103,29 @@ impl Tasinput2State {
             rx: rx2,
         }
     }
+
+    // send a command to the thread
+    fn send_cmd(&self, command: StateCommand) -> Result<(), &'static str> {
+        if let Err(e) = self.tx.send(command) {
+            return Err("Unable to communicate with thread");
+        }
+
+        match self.rx.recv() {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(e)) => Err(e),
+            Err(e) => Err("Unable to communicate with thread"),
+        }
+    }
+
+    /// Start up QT
+    pub fn start_qt(&self) -> Result<(), &'static str> {
+        self.send_cmd(StateCommand::StartQT)
+    }
+
+    /// End the QT context
+    pub fn end_qt(&self) -> Result<(), &'static str> {
+        self.send_cmd(StateCommand::EndQT)
+    }
 }
 
 impl Default for Tasinput2State {
