@@ -29,6 +29,8 @@ jobs:
        uses: jurplel/install-qt-action@v2
      - name: Install MSVC Build Tools
        uses: ilammy/msvc-dev-cmd@v1
+     - name: Install LLVM
+       uses: llvm/actions/setup-windows@master
      - name: Install Clippy
        run: rustup component add clippy
      - run: cargo clippy
@@ -49,4 +51,6 @@ jobs:
        uses: jurplel/install-qt-action@v2
      - name: Install MSVC Build Tools
        uses: ilammy/msvc-dev-cmd@v1
+     - name: Install LLVM
+       uses: llvm/actions/setup-windows@master
      - run: cargo test
