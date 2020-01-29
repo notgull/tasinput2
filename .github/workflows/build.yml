@@ -15,42 +15,89 @@ jobs:
      - name: Install Rustfmt
        run: rustup component add rustfmt
      - run: cargo fmt -- --check
-
-  lint:
-    name: Lint
-    runs-on: windows-latest
-    steps:
-     - uses: actions/checkout@master
-     - name: Install Rust
-       run: rustup update stable
-     - name: Set Rust Default Toolchain
-       run: rustup default stable
-     - name: Install Qt
-       uses: jurplel/install-qt-action@v2
-     - name: Install MSVC Build Tools
-       uses: ilammy/msvc-dev-cmd@v1
-     - name: Install LLVM
-       uses: llvm/actions/setup-windows@master
-     - name: Install Clippy
-       run: rustup component add clippy
-     - run: cargo clippy
   
   test:
     name: Test
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         toolchain: [stable, beta, nightly]
+        ttype: [Test, Lint, Deploy]
+        os: [windows-latest, ubuntu-latest]
+        exclude:
+          - toolchain: beta
+            ttype: 'Lint'
+          - toolchain: nightly
+            ttype: 'Lint'
+          - toolchain: beta
+            ttype: 'Deploy'
+          - toolchain: nightly
+            ttype: 'Deploy'
+          - os: macOs-latest
+            ttype: lint
+          - os: windows-latest
+            ttype: lint
+          - os: windows-latest
+            toolchain: beta
+          - os: windows-latest
+            toolchain: nightly
+          - os: macOS-latest
+            toolchain: beta
+          - os: macOS-latest
+            toolchain: nightly           
     steps:
+     # install Rust
      - uses: actions/checkout@master
      - name: Install Rust
        run: rustup update ${{ matrix.toolchain }}
      - name: Set Rust Default Toolchain
        run: rustup default ${{ matrix.toolchain }}
-     - name: Install Qt
+       if: success()
+     
+     # install QT
+     - name: Install Qt (Windows)
+       if: matrix.os == 'windows-latest'
        uses: jurplel/install-qt-action@v2
-     - name: Install MSVC Build Tools
+     - name: Install Qt (Linux)
+       if: matrix.os == 'ubuntu-latest'
+       run: sudo apt install build-essential qt5-default
+     - name: Install Qt (MacOS)
+       if: matrix.os == 'macOS-latest'
+       run: brew install qt5
+     
+     # install MSVC if we're using Windows
+     - name: Install MSVC Build Tools (Windows)
+       if: matrix.os == 'windows-latest'
        uses: ilammy/msvc-dev-cmd@v1
-     - name: Install LLVM
-       uses: llvm/actions/setup-windows@master
+   
+     # install LLVM
+     - name: Install LLVM (Linux)
+       if: matrix.os == 'ubuntu-latest'
+       run: sudo apt install llvm
+     - name: Install LLVM (Windows)
+       if: matrix.os == 'windows-latest'
+       shell: powershell
+       run: |
+         Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+         scoop install llvm --global
+         "C:\Program Files (x86)\Microsoft Visual Studio\2019\\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+         gci env:* | ForEach-Object { Write-Output ("::set-env name=" + $_.name + "::" + $_.value) }
+         Write-Output ("::set-env name=LIBCLANG_PATH::C:\ProgramData\scoop\apps\llvm\current\lib")
+     - name: Install LLVM (MacOS)
+       if: matrix.os == 'macOS-latest'
+       run: brew install llvm
+
+         
+     
+     # install clippy
+     - name: Install Clippy
+       if: matrix.ttype == 'Lint'
+       run: rustup component add clippy
+       
+     # actual tests to be run
      - run: cargo test
+       if: matrix.ttype == 'Test' && success()
+     - run: cargo clippy
+       if: matrix.ttype == 'Lint'
+     - run: cargo build --release
+       if: matrix.ttype == 'Deploy' && github.event_name == 'push'

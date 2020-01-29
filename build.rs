@@ -49,7 +49,7 @@ async fn download_file<'a>(
     let fname = dir_path.join(fname);
     let mut dest = File::create(&fname)?;
 
-    dest.write(&response.bytes().await?)?;
+    dest.write_all(&response.bytes().await?)?;
     Ok(fname)
 }
 

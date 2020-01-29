@@ -48,10 +48,14 @@ use std::ptr::null_mut;
 
 pub const CONTROLLER_COUNT: u32 = 4;
 
+lazy_static! {
+    static ref STATE: Arc<Mutex<Tasinput2State>> = Arc::new(Mutex::new(Tasinput2State::new()));
+}
+
 // the only safe part of the dll info: parsing the string
 #[cold]
 fn get_version_string() -> CString {
-    let plugin_name = format!("TAS Input Plugin 2 v{}", env!("CARGO_PKG_VERSION"));
+    let plugin_name = concat!("TAS Input Plugin 2 v", env!("CARGO_PKG_VERSION"));
 
     // convert plugin name to a cstring
     CString::new(plugin_name).unwrap_or_else(|e| {
@@ -98,7 +102,7 @@ pub unsafe extern "C" fn PluginGetVersion(
     // copy the version string into the plugin name
     if plugin_name.is_null() {
         let version = get_version_string();
-        *plugin_name = version.as_ptr();
+        *plugin_name = version.into_raw();
     }
 
     m64compat::m64p_error_M64ERR_SUCCESS
@@ -112,7 +116,7 @@ pub unsafe extern "C" fn PluginGetVersion(
 #[allow(non_snake_case)]
 #[no_mangle]
 pub unsafe extern "C" fn CloseDll() {
-    gui::close_application();
+    if let Err(_) = (*STATE.lock().unwrap()).end_qt() {};
 }
 
 /// Process raw data sent to this controller. This is a No-op in the original TAS plugin and it is a no-op here too.
