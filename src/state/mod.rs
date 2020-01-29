@@ -55,7 +55,7 @@ fn state_manager(tx: Sender<Result<(), &'static str>>, rx: Receiver<StateCommand
             StateCommand::NoOp => tx.send(Ok(())).unwrap(),
             StateCommand::End => {
                 *(continue_loop.lock().unwrap()).get_mut() = false;
-                if let Ok(()) = terminate_qt() { };
+                if let Ok(()) = terminate_qt() {};
                 tx.send(Ok(())).unwrap();
             }
             StateCommand::StartQT => {
@@ -106,5 +106,7 @@ impl Tasinput2State {
 }
 
 impl Default for Tasinput2State {
-    fn default() -> Tasinput2State { Self::new() }
+    fn default() -> Tasinput2State {
+        Self::new()
+    }
 }
