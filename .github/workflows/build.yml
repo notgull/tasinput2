@@ -80,7 +80,6 @@ jobs:
        run: |
          Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
          scoop install llvm --global
-         "C:\Program Files (x86)\Microsoft Visual Studio\2019\\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
          gci env:* | ForEach-Object { Write-Output ("::set-env name=" + $_.name + "::" + $_.value) }
          Write-Output ("::set-env name=LIBCLANG_PATH::C:\ProgramData\scoop\apps\llvm\current\lib")
      - name: Install LLVM (MacOS)
