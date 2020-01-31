@@ -1,0 +1,70 @@
+trigger:
+  branches:
+    include: ['*']
+  tags:
+    include: ['*']
+
+stages: 
+- stage: check
+  displayName: "Code Checks/Tests"
+  jobs:
+  - job: "rustfmt"
+    displayName: "Formatting Check"
+    pool:
+      vmImage: "ubuntu-18.04"
+    steps:
+     - template: ./ci/install-rust.yml  
+       parameters:
+         components: ["rustfmt"]
+     - script: cargo fmt -- --check
+       displayName: "Test Formatting"
+  - job: "clippy"
+    displayName: "Lint Check"
+    pool:
+      vmImage: "ubuntu-18.04"
+    steps:
+     - template: ./ci/install-rust.yml
+       parameters:
+         components: ["clippy"]
+     - template: ./ci/install-qt.yml
+     - template: ./ci/install-llvm.yml
+     - script: cargo clippy
+       displayName: "Lint"
+  - job: "test"
+    displayName: "Multiplatform Test"
+    strategy:
+      matrix:
+        Linux:
+          vmImage: ubuntu-18.04
+#        MacOS:
+#          vmImage: macOS-10.13
+        Windows:
+          vmImage: vs2017-win2016
+    pool:
+      vmImage: $(vmImage)
+    steps:
+      - template: ./ci/install-rust.yml
+      - template: ./ci/install-qt.yml
+      - template: ./ci/install-llvm.yml
+      - script: cargo test
+        displayName: "Run Test"
+  - job: "test2"
+    displayName: "Toolchain Test"
+    strategy:
+      matrix:
+        Stable:
+          toolchain: stable
+        Beta:
+          toolchain: beta
+        Nightly:
+          toolchain: nightly
+    pool:
+      vmImage: ubuntu-18.04
+    steps:
+     - template: ./ci/install-rust.yml
+       parameters:
+         toolchain: $(toolchain)
+     - template: ./ci/install-qt.yml
+     - template: ./ci/install-llvm.yml
+     - script: cargo test
+       displayName: "Run Test"
