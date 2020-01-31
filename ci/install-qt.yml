@@ -1,0 +1,42 @@
+steps:
+  # Install QT for linux
+  - script: |
+      sudo apt update -y
+      sudo apt install build-essential libgl1-mesa-dev qt5-default
+    displayName: "Install QT (Linux)"
+    condition: eq(variables['Agent.OS'], 'Linux')
+  
+  # Install QT Dependencies for Mac
+  - script: |
+      brew install p7zip
+      brew install create-dmg
+    displayName: "Install QT Dependencies (Mac)"
+    condition: eq(variables['Agent.OS'], 'Mac')
+
+  # Install Python for Mac or Windows
+  - task: UsePythonVersion@0 
+    inputs:
+      versionSpec: '3.x'
+    condition: not(eq(variables['Agent.OS'], 'Linux'))
+    
+  # Install AQT for Mac or Windows
+  - script: |
+      python -m pip install aqtinstall
+    displayName: "Install AQTInstall (Windows/Mac)"
+    condition: not(eq(variables['Agent.OS'], 'Linux'))
+  
+  # Install QT for Mac
+  - script: |
+      python -m aqt install --outputdir $(Build.BinariesDirectory)/Qt 5.14.0 mac desktop -m qtcore qtgui qtxml qtwidgets
+    displayName: "Install QT (Mac)"
+    condition: eq(variables['Agent.OS'], 'Darwin')
+
+  # Install QT for Windows
+  - script: |
+      python -m aqt install --outputdir $(Build.BinariesDirectory)\\Qt 5.14.0 windows desktop win_msvc2017 -m qtcore qtgui qtxml qtwidgets
+      displayName: "Install QT (Windows)"
+      condition: eq(variables['Agent.OS'], 'Windows_NT')
+
+  # Test QMAKE
+  - script: qmake -query QT_VERSION
+    displayName: "Ensure QT is installed"
