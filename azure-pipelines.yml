@@ -10,7 +10,7 @@ resources:
       type: github
       name: xoac/rust-azure-pipelines
       ref: refs/heads/master 
-#      endpoint: PipelinesTemplates # TODO YOU NEED TO CHANGE THIS!
+      endpoint: Tasinput2
 
 stages: 
 - stage: check
