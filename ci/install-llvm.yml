@@ -10,9 +10,6 @@ steps:
       scoop install llvm --global   
       Write-Output ($env:PATH)
       Write-Output ("##vso[task.setvariable variable=PATH]" + $env:PATH)
+      Write-Output ("##vso[task.setvariable variable=LIBCLANG_PATH]C:\ProgramData\scoop\apps\llvm\current\lib")
     displayName: "Install LLVM (Windows)"
     condition: eq(variables['Agent.OS'], 'Windows_NT')
-  - bash: |
-      echo $PATH
-      llvm-config --version
-    displayName: "Verify LLVM Installation"
