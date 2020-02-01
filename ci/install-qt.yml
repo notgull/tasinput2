@@ -43,7 +43,5 @@ steps:
     condition: eq(variables['Agent.OS'], 'Windows_NT')
 
   # Test QMAKE
-  - script: |
-      echo %PATH%
-      qmake -query QT_VERSION
+  - script: qmake -query QT_VERSION
     displayName: "Ensure QT is installed"

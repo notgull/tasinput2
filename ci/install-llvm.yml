@@ -8,6 +8,7 @@ steps:
   - powershell: |
       Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
       scoop install llvm --global   
+      Write-Output ("##vso[task.setvariable variable=PATH]" + $Env:Path)
     displayName: "Install LLVM (Windows)"
     condition: eq(variables['Agent.OS'], 'Windows_NT')
   - script: llvm-config --version
