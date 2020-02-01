@@ -50,8 +50,8 @@ stages:
        matrix:
          Linux:
            vmImage: ubuntu-18.04
-         MacOS:
-           vmImage: macOS-10.13
+#         MacOS:
+#           vmImage: macOS-10.13
          Windows:
            vmImage: vs2017-win2016
      pool:
