@@ -34,6 +34,7 @@ steps:
   # Install QT for Windows
   - script: |
       python -m aqt install --outputdir $(Build.BinariesDirectory)\\Qt 5.14.0 windows desktop win64_msvc2017_64 -m qtcore qtgui qtxml qtwidgets
+      set PATH=%PATH%$(Build.BinariesDirectory)/Qt;
     displayName: "Install QT (Windows)"
     condition: eq(variables['Agent.OS'], 'Windows_NT')
 
