@@ -33,7 +33,7 @@ jobs:
             ttype: 'Deploy'
           - toolchain: nightly
             ttype: 'Deploy'
-          - os: macOs-latest
+          - os: macOS-latest
             ttype: lint
           - os: windows-latest
             ttype: lint

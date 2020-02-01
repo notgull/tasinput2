@@ -34,7 +34,6 @@ mod inputs;
 mod plugin_info;
 mod state;
 
-use plugin_info::PluginInfo;
 use std::{
     ffi::{c_void, CString},
     ptr,

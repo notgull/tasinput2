@@ -19,9 +19,9 @@
  */
 
 mod command;
+mod error;
 
 use crate::{Controller, CONTROLLER_COUNT};
-use command::StateCommand;
 use qt_widgets::{qt_core::QCoreApplication, qt_gui::QGuiApplication};
 use std::{
     sync::{
@@ -32,10 +32,13 @@ use std::{
     thread::{self, JoinHandle},
 };
 
+pub use command::StateCommand;
+pub use error::StateError;
+
 // terminate the QT thread
-fn terminate_qt() -> Result<(), &'static str> {
+fn terminate_qt() -> Result<(), StateError> {
     if unsafe { QCoreApplication::instance().is_null() } {
-        Err("Application is null")
+        Err(StateError::QtClosed)
     } else {
         unsafe {
             QCoreApplication::exit_0a();
@@ -46,21 +49,25 @@ fn terminate_qt() -> Result<(), &'static str> {
 
 // manager for the inner thread
 // TODO: remove unwraps
-fn state_manager(tx: Sender<Result<(), &'static str>>, rx: Receiver<StateCommand>) {
+fn state_manager(tx: Sender<Result<(), StateError>>, rx: Receiver<StateCommand>) {
     let mut app_is_running = false;
     let continue_loop = Arc::new(Mutex::new(AtomicBool::new(true)));
+    let controllers: [Controller; CONTROLLER_COUNT] = Default::default();
 
     'stateloop: loop {
         match rx.recv().unwrap() {
             StateCommand::NoOp => tx.send(Ok(())).unwrap(),
             StateCommand::End => {
                 *(continue_loop.lock().unwrap()).get_mut() = false;
-                if let Ok(()) = terminate_qt() {};
-                tx.send(Ok(())).unwrap();
+                if let Err(e) = terminate_qt() {
+                  tx.send(Err(e)).unwrap();
+                } else {
+                  tx.send(Ok(())).unwrap();
+                }
             }
             StateCommand::StartQT => {
                 if !(unsafe { QCoreApplication::instance().is_null() }) {
-                    tx.send(Err("QGuiApplication is already open")).unwrap();
+                    tx.send(Err(StateError::QtOpen)).unwrap();
                 } else {
                     unsafe {
                         QGuiApplication::exec();
@@ -83,7 +90,7 @@ pub struct Tasinput2State {
     ended: bool,
     handle: JoinHandle<()>,
     tx: Sender<StateCommand>,
-    rx: Receiver<Result<(), &'static str>>,
+    rx: Receiver<Result<(), StateError>>,
 }
 
 impl Tasinput2State {
@@ -107,34 +114,33 @@ impl Tasinput2State {
     }
 
     // send a command to the thread
-    fn send_cmd(&self, command: StateCommand) -> Result<(), &'static str> {
-        if let Err(e) = self.tx.send(command) {
-            return Err("Unable to communicate with thread");
-        }
+    fn send_cmd(&self, command: StateCommand) -> Result<(), StateCommand> {
+        self.tx.send(command)?;
 
         match self.rx.recv() {
             Ok(Ok(())) => Ok(()),
             Ok(Err(e)) => Err(e),
-            Err(e) => Err("Unable to communicate with thread"),
+            Err(e) => Err(StateCommand::RecvErrorCT(e)),
         }
     }
 
     /// Start up QT
-    pub fn start_qt(&self) -> Result<(), &'static str> {
+    pub fn start_qt(&self) -> Result<(), StateCommand> {
         self.send_cmd(StateCommand::StartQT)
     }
 
     /// End the QT context
-    pub fn end_qt(&self) -> Result<(), &'static str> {
+    pub fn end_qt(&self) -> Result<(), StateCommand> {
         self.send_cmd(StateCommand::EndQT)
     }
 
     /// End the current loop
-    pub fn end(&self) -> Result<(), &'static str> {
+    pub fn end(&mut self) -> Result<(), StateCommand> {
         if let Err(e) = self.end_qt() {
             eprintln!("Unable to end QT: {:?}... Proceeding anyways", e);
         }
 
+        self.ended = true;
         self.send_cmd(StateCommand::End)
     }
 }
