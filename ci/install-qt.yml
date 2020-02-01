@@ -36,6 +36,7 @@ steps:
       python -m aqt install --outputdir $(Build.BinariesDirectory)\\Qt %QT_VERSION% windows desktop win64_msvc2017_64 -m qtcore qtgui qtxml qtwidgets
       set PATH=%BIN_DIR%\Qt\%QT_VERSION%\msvc2017_64\bin;%PATH%
       echo %PATH%
+      qmake -query QT_VERSION
     displayName: "Install QT (Windows)"
     env:
       BIN_DIR: $(Build.BinariesDirectory)
@@ -43,5 +44,7 @@ steps:
     condition: eq(variables['Agent.OS'], 'Windows_NT')
 
   # Test QMAKE
-  - script: qmake -query QT_VERSION
+  - script: |
+      echo %PATH%
+      qmake -query QT_VERSION
     displayName: "Ensure QT is installed"
