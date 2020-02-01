@@ -34,10 +34,10 @@ steps:
   # Install QT for Windows
   - script: |
       python -m aqt install --outputdir $(Build.BinariesDirectory)\\Qt %QT_VERSION% windows desktop win64_msvc2017_64 -m qtcore qtgui qtxml qtwidgets
-      set PATH=%BIN_DIR%\Qt\%QT_VERSION%\bin:%PATH%;
+      set PATH=%BIN_DIR%\Qt\%QT_VERSION%\msvc2017_64\bin:%PATH%;
       echo %PATH%
-      dir %BIN_DIR%\Qt\%QT_VERSION%
-      dir %BIN_DIR%\Qt\%QT_VERSION%\bin
+      dir %BIN_DIR%\Qt\%QT_VERSION%\msvc2017_64\
+      dir %BIN_DIR%\Qt\%QT_VERSION%\msvc2017_64\bin
     displayName: "Install QT (Windows)"
     env:
       BIN_DIR: $(Build.BinariesDirectory)
