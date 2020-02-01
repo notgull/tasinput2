@@ -24,13 +24,13 @@
 #[macro_use]
 extern crate lazy_static;
 extern crate libc;
+extern crate m64p_sys;
 extern crate qt_widgets;
 extern crate thiserror;
 
 mod controller;
 mod gui;
 mod inputs;
-mod m64compat;
 mod plugin_info;
 mod state;
 
@@ -38,7 +38,7 @@ use plugin_info::PluginInfo;
 use std::{
     ffi::{c_void, CString},
     ptr,
-    sync::{Arc, Mutex},
+    sync::{atomic::AtomicBool, Arc, Mutex},
 };
 
 pub use controller::*;
@@ -49,6 +49,8 @@ use std::ptr::null_mut;
 pub const CONTROLLER_COUNT: u32 = 4;
 
 lazy_static! {
+    static ref IS_INITIALIZED: Arc<Mutex<AtomicBool>> =
+        Arc::new(Mutex::new(AtomicBool::new(false)));
     static ref STATE: Arc<Mutex<Tasinput2State>> = Arc::new(Mutex::new(Tasinput2State::new()));
 }
 
@@ -73,12 +75,12 @@ fn get_version_string() -> CString {
 #[allow(non_snake_case)]
 #[no_mangle]
 pub unsafe extern "C" fn PluginGetVersion(
-    plugin_type: *mut m64compat::m64p_plugin_type,
+    plugin_type: *mut m64p_sys::m64p_plugin_type,
     plugin_version: *mut i32,
     api_version: *mut i32,
     plugin_name: *mut *const c_char,
     capabilities: *mut i32,
-) -> m64compat::m64p_error {
+) -> m64p_sys::m64p_error {
     // an increment over the past version
     if plugin_version.is_null() {
         *plugin_version = 0x0200;
@@ -105,7 +107,32 @@ pub unsafe extern "C" fn PluginGetVersion(
         *plugin_name = version.into_raw();
     }
 
-    m64compat::m64p_error_M64ERR_SUCCESS
+    m64p_sys::m64p_error_M64ERR_SUCCESS
+}
+
+/// Start up this plugin.
+///
+/// # Safety
+///
+/// Exclusively called from C code
+#[allow(non_snake_case)]
+#[no_mangle]
+pub unsafe extern "C" fn PluginStartup(
+    core_lib_handle: m64p_sys::m64p_dynlib_handle,
+    context: *const c_void,
+    debug_callback: unsafe extern "C" fn(*const c_void, i32, *const c_char),
+) -> m64p_sys::m64p_error {
+    let is_started: &mut bool = IS_INITIALIZED.lock().unwrap().get_mut();
+    if *is_started {
+        return m64p_sys::m64p_error_M64ERR_ALREADY_INIT;
+    }
+    *is_started = true;
+
+    if let Err(e) = STATE.lock().unwrap().start_qt() {
+        eprintln!("Unable to start QT: {:?}", e);
+        return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
+    }
+    m64p_sys::m64p_error_M64ERR_SUCCESS
 }
 
 /// Close this DLL.
@@ -115,15 +142,27 @@ pub unsafe extern "C" fn PluginGetVersion(
 /// Exclusively called from C code
 #[allow(non_snake_case)]
 #[no_mangle]
-pub unsafe extern "C" fn CloseDll() {
-    if let Err(_) = (*STATE.lock().unwrap()).end_qt() {};
+pub unsafe extern "C" fn PluginShutdown() -> m64p_sys::m64p_error {
+    let is_started: &mut bool = IS_INITIALIZED.lock().unwrap().get_mut();
+    if !(*is_started) {
+        return m64p_sys::m64p_error_M64ERR_NOT_INIT;
+    }
+
+    if let Err(e) = (*STATE.lock().unwrap()).end() {
+        eprintln!("tasinput2 error: {:?}", e);
+        return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
+    }
+
+    *is_started = false;
+
+    m64p_sys::m64p_error_M64ERR_SUCCESS
 }
 
-/// Process raw data sent to this controller. This is a No-op in the original TAS plugin and it is a no-op here too.
+/// Process raw data sent to this controller.
 ///
 /// # Safety
 ///
-/// This function does nothing that is unsafe, because it does nothing.
+/// Exclusively called from C code.
 #[allow(non_snake_case)]
 #[no_mangle]
 pub unsafe extern "C" fn ControllerCommand(_controllerNumber: i32, _data_pointer: *const u8) {}

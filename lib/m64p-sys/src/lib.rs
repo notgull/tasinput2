@@ -1,5 +1,5 @@
 /*
- * src/m64compat.rs
+ * lib/m64p-sys/src/lib.rs
  * tasinput2 - Plugin for creating TAS inputs
  *
  * This file is part of tasinput2.

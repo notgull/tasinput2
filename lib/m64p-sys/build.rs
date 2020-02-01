@@ -56,7 +56,7 @@ async fn download_file<'a>(
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
-    let tmp_dir = tempfile::Builder::new().prefix("m64headers").tempdir()?;
+    let tmp_dir = tempfile::Builder::new().prefix("m64p_headers").tempdir()?;
 
     // download mupen64 headers
     let files = futures::join!(

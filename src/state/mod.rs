@@ -80,6 +80,7 @@ fn state_manager(tx: Sender<Result<(), &'static str>>, rx: Receiver<StateCommand
 
 /// Represents the current state of the program as a whole
 pub struct Tasinput2State {
+    ended: bool,
     handle: JoinHandle<()>,
     tx: Sender<StateCommand>,
     rx: Receiver<Result<(), &'static str>>,
@@ -98,6 +99,7 @@ impl Tasinput2State {
         });
 
         Tasinput2State {
+            ended: false,
             handle,
             tx: tx1,
             rx: rx2,
@@ -125,6 +127,15 @@ impl Tasinput2State {
     /// End the QT context
     pub fn end_qt(&self) -> Result<(), &'static str> {
         self.send_cmd(StateCommand::EndQT)
+    }
+
+    /// End the current loop
+    pub fn end(&self) -> Result<(), &'static str> {
+        if let Err(e) = self.end_qt() {
+            eprintln!("Unable to end QT: {:?}... Proceeding anyways", e);
+        }
+
+        self.send_cmd(StateCommand::End)
     }
 }
 
