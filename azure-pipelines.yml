@@ -66,5 +66,6 @@ stages:
          toolchain: $(toolchain)
      - template: ./ci/install-qt.yml
      - template: ./ci/install-llvm.yml
+     - script: nmake -v
      - script: cargo test
        displayName: "Run Test"
