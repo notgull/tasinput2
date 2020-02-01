@@ -67,5 +67,6 @@ stages:
      - template: ./ci/install-qt.yml
      - template: ./ci/install-llvm.yml
      - script: nmake -v
+       condition: eq(variables['Agent.OS'], 'Windows_NT')
      - script: cargo test
        displayName: "Run Test"
