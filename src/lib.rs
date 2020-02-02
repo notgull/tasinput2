@@ -138,7 +138,7 @@ pub unsafe extern "C" fn PluginStartup(
     *debug::DEBUG_OUT.lock().unwrap() = Some(debug::Debugger { debug_fn: debug_callback });
 
     if let Err(e) = STATE.lock().unwrap().start_qt() {
-        eprintln!("Unable to start QT: {:?}", e);
+        dprintln!("Unable to start QT: {:?}", e);
         return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
     }
     m64p_sys::m64p_error_M64ERR_SUCCESS
