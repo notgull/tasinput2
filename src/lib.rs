@@ -38,6 +38,7 @@ mod state;
 use std::{
     ffi::{c_void, CString},
     os::raw::c_char,
+    panic::catch_unwind,
     sync::{
         atomic::{AtomicBool, AtomicPtr},
         Arc, Mutex,
@@ -80,44 +81,53 @@ pub unsafe extern "C" fn PluginStartup(
     context: *mut c_void,
     debug_callback: unsafe extern "C" fn(*mut c_void, m64p_sys::m64p_msg_level, *const c_char),
 ) -> m64p_sys::m64p_error {
-    let mut lock = match IS_INITIALIZED.lock() {
-        Ok(l) => l,
-        Err(e) => {
-            eprintln!("Initialization error: {}", e);
+    match catch_unwind(|| {
+        let mut lock = match IS_INITIALIZED.lock() {
+            Ok(l) => l,
+            Err(e) => {
+                eprintln!("Initialization error: {}", e);
+                return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
+            }
+        };
+
+        *(match debug::DEBUG_OUT.lock() {
+            Ok(l) => l,
+            Err(e) => {
+                eprintln!("Unable to acquire debug lock: {}", e);
+                return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
+            }
+        }) = Some(debug::Debugger {
+            debug_fn: debug_callback,
+        });
+
+        let is_started: &mut bool = lock.get_mut();
+        if *is_started {
+            return m64p_sys::m64p_error_M64ERR_ALREADY_INIT;
+        }
+        *is_started = true;
+
+        let mut lock = match STATE.lock() {
+            Ok(l) => l,
+            Err(e) => {
+                dprintln!("Mutex error: {}", e);
+                return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
+            }
+        };
+        lock.context = Some(AtomicPtr::new(context));
+
+        if let Err(e) = lock.start_qt() {
+            dprintln!("Unable to start QT: {:?}", e);
             return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
         }
-    };
 
-    *(match debug::DEBUG_OUT.lock() {
-        Ok(l) => l,
+        m64p_sys::m64p_error_M64ERR_SUCCESS
+    }) {
+        Ok(_) => m64p_sys::m64p_error_M64ERR_SUCCESS,
         Err(e) => {
-            eprintln!("Unable to acquire debug lock: {}", e);
-            return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
+            eprintln!("Panic occurred: {:?}", e);
+            m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL
         }
-    }) = Some(debug::Debugger {
-        debug_fn: debug_callback,
-    });
-
-    let is_started: &mut bool = lock.get_mut();
-    if *is_started {
-        return m64p_sys::m64p_error_M64ERR_ALREADY_INIT;
     }
-    *is_started = true;
-
-    let mut lock = match STATE.lock() {
-        Ok(l) => l,
-        Err(e) => {
-            dprintln!("Mutex error: {}", e);
-            return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
-        }
-    };
-    lock.context = Some(AtomicPtr::new(context));
-
-    if let Err(e) = lock.start_qt() {
-        dprintln!("Unable to start QT: {:?}", e);
-        return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
-    }
-    m64p_sys::m64p_error_M64ERR_SUCCESS
 }
 
 /// Put the DLL's information into a plugin information struct.
@@ -134,33 +144,41 @@ pub unsafe extern "C" fn PluginGetVersion(
     plugin_name: *mut *const c_char,
     capabilities: *mut i32,
 ) -> m64p_sys::m64p_error {
-    // an increment over the past version
-    if plugin_version.is_null() {
-        *plugin_version = 0x0200;
-    }
+    match catch_unwind(|| {
+        // an increment over the past version
+        if plugin_version.is_null() {
+            *plugin_version = 0x0200;
+        }
 
-    // indicate this is a controller plugin
-    if plugin_type.is_null() {
-        *plugin_type = m64p_sys::m64p_plugin_type_M64PLUGIN_INPUT;
-    }
+        // indicate this is a controller plugin
+        if plugin_type.is_null() {
+            *plugin_type = m64p_sys::m64p_plugin_type_M64PLUGIN_INPUT;
+        }
 
-    // indicate the API version this expects
-    if api_version.is_null() {
-        *api_version = 0x020100;
-    }
+        // indicate the API version this expects
+        if api_version.is_null() {
+            *api_version = 0x020100;
+        }
 
-    // what capabilities does this plugin have?
-    if capabilities.is_null() {
-        *capabilities = 0;
-    }
+        // what capabilities does this plugin have?
+        if capabilities.is_null() {
+            *capabilities = 0;
+        }
 
-    // copy the version string into the plugin name
-    if plugin_name.is_null() {
-        let version = get_version_string();
-        *plugin_name = version.into_raw();
-    }
+        // copy the version string into the plugin name
+        if plugin_name.is_null() {
+            let version = get_version_string();
+            *plugin_name = version.into_raw();
+        }
 
-    m64p_sys::m64p_error_M64ERR_SUCCESS
+        m64p_sys::m64p_error_M64ERR_SUCCESS
+    }) {
+        Ok(_) => m64p_sys::m64p_error_M64ERR_SUCCESS,
+        Err(e) => {
+            dprintln!("Panic occurred: {:?}", e);
+            m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL
+        }
+    }
 }
 
 /// Close this DLL.
@@ -171,34 +189,42 @@ pub unsafe extern "C" fn PluginGetVersion(
 #[allow(non_snake_case)]
 #[no_mangle]
 pub unsafe extern "C" fn PluginShutdown() -> m64p_sys::m64p_error {
-    let mut lock = match IS_INITIALIZED.lock() {
-        Ok(l) => l,
-        Err(e) => {
-            dprintln!("{:?}", e);
+    match catch_unwind(|| {
+        let mut lock = match IS_INITIALIZED.lock() {
+            Ok(l) => l,
+            Err(e) => {
+                dprintln!("{:?}", e);
+                return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
+            }
+        };
+        let is_started: &mut bool = lock.get_mut();
+        if !(*is_started) {
+            return m64p_sys::m64p_error_M64ERR_NOT_INIT;
+        }
+
+        if let Err(e) = (*(match STATE.lock() {
+            Ok(l) => l,
+            Err(e) => {
+                dprintln!("{:?}", e);
+                return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
+            }
+        }))
+        .end()
+        {
+            eprintln!("tasinput2 error: {:?}", e);
             return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
         }
-    };
-    let is_started: &mut bool = lock.get_mut();
-    if !(*is_started) {
-        return m64p_sys::m64p_error_M64ERR_NOT_INIT;
-    }
 
-    if let Err(e) = (*(match STATE.lock() {
-        Ok(l) => l,
+        *is_started = false;
+
+        m64p_sys::m64p_error_M64ERR_SUCCESS
+    }) {
+        Ok(_) => m64p_sys::m64p_error_M64ERR_SUCCESS,
         Err(e) => {
-            dprintln!("{:?}", e);
-            return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
+            eprintln!("Panic occurred: {:?}", e);
+            m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL
         }
-    }))
-    .end()
-    {
-        eprintln!("tasinput2 error: {:?}", e);
-        return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
     }
-
-    *is_started = false;
-
-    m64p_sys::m64p_error_M64ERR_SUCCESS
 }
 
 /// Process raw data sent to this controller.

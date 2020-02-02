@@ -90,7 +90,7 @@ pub fn _dprint(args: fmt::Arguments) {
 
     match lock {
         Some(l) => l.write_fmt(args).unwrap(),
-        None => eprint!("{}", args)
+        None => eprint!("{}", args),
     };
 }
 
