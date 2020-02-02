@@ -80,8 +80,9 @@ pub fn _dprint(args: fmt::Arguments) {
     let lock = dlock.as_mut();
     if lock.is_none() {
         eprint!("{}", args);
+    } else {
+        lock.unwrap().write_fmt(args).unwrap();
     }
-    lock.unwrap().write_fmt(args).unwrap();
 }
 
 #[macro_export]
