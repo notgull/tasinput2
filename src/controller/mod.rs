@@ -71,6 +71,7 @@ impl Controller {
 
         self.tx.send(ControllerCommand::End)?;
         if self.handle.take().unwrap().join().is_err() {
+            // unwrap here is safe because is_active assures that handle is Some
             return Err(ControllerError::StaticMsg("Unable to join thread"));
         }
 
