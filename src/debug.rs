@@ -37,6 +37,8 @@ impl Write for Debugger {
         let input = CString::new(s).unwrap_or_else(|e| {
             let mut v = e.into_vec();
             v.retain(|x| *x != 0);
+
+            #[allow(clippy::or_fun_call)]
             CString::new(v).unwrap_or(CString::new("Unable to process error").unwrap())
         });
 
@@ -76,13 +78,20 @@ lazy_static! {
 // internal use printing function
 #[doc(hidden)]
 pub fn _dprint(args: fmt::Arguments) {
-    let mut dlock = DEBUG_OUT.lock().unwrap();
+    let mut dlock = match DEBUG_OUT.lock() {
+        Ok(dl) => dl,
+        Err(_) => {
+            eprint!("{}", args);
+            return;
+        }
+    };
+
     let lock = dlock.as_mut();
-    if lock.is_none() {
-        eprint!("{}", args);
-    } else {
-        lock.unwrap().write_fmt(args).unwrap();
-    }
+
+    match lock {
+        Some(l) => l.write_fmt(args).unwrap(),
+        None => eprint!("{}", args)
+    };
 }
 
 #[macro_export]
