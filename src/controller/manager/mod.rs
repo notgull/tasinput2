@@ -1,5 +1,5 @@
 /*
- * src/controller/manager.rs
+ * src/controller/manager/mod.rs
  * tasinput2 - Plugin for creating TAS inputs
  *
  * This file is part of tasinput2.
@@ -17,6 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+mod gui;
 
 use super::{ControllerCommand, ControllerResponse};
 use std::{

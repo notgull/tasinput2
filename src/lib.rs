@@ -20,13 +20,10 @@
 
 #![allow(clippy::many_single_char_names)]
 #![allow(clippy::too_many_arguments)]
+#![warn(rust_2018_idioms)]
 
 #[macro_use]
 extern crate lazy_static;
-extern crate libc;
-extern crate m64p_sys;
-extern crate qt_widgets;
-extern crate thiserror;
 
 mod controller;
 #[doc(hidden)]
@@ -46,6 +43,7 @@ use std::{
 };
 
 pub use controller::*;
+pub use inputs::{Directional, Inputs};
 pub use state::Tasinput2State;
 
 pub const CONTROLLER_COUNT: u32 = 4;
@@ -146,27 +144,27 @@ pub unsafe extern "C" fn PluginGetVersion(
 ) -> m64p_sys::m64p_error {
     match catch_unwind(|| {
         // an increment over the past version
-        if plugin_version.is_null() {
+        if !plugin_version.is_null() {
             *plugin_version = 0x0200;
         }
 
         // indicate this is a controller plugin
-        if plugin_type.is_null() {
+        if !plugin_type.is_null() {
             *plugin_type = m64p_sys::m64p_plugin_type_M64PLUGIN_INPUT;
         }
 
         // indicate the API version this expects
-        if api_version.is_null() {
+        if !api_version.is_null() {
             *api_version = 0x020100;
         }
 
         // what capabilities does this plugin have?
-        if capabilities.is_null() {
+        if !capabilities.is_null() {
             *capabilities = 0;
         }
 
         // copy the version string into the plugin name
-        if plugin_name.is_null() {
+        if !plugin_name.is_null() {
             let version = get_version_string();
             *plugin_name = version.into_raw();
         }

@@ -53,7 +53,7 @@ fn terminate_qt() -> Result<(), StateError> {
 fn state_manager(tx: Sender<Result<(), StateError>>, rx: Receiver<StateCommand>) {
     let mut app_is_running = false;
     let continue_loop = Arc::new(Mutex::new(AtomicBool::new(true)));
-    let controllers: [Controller; CONTROLLER_COUNT as usize] = Default::default();
+    let mut controllers: [Controller; CONTROLLER_COUNT as usize] = Default::default();
 
     'stateloop: loop {
         match rx.recv().unwrap() {
@@ -78,8 +78,20 @@ fn state_manager(tx: Sender<Result<(), StateError>>, rx: Receiver<StateCommand>)
                 }
             }
             StateCommand::EndQT => tx.send(terminate_qt()).unwrap(),
-            StateCommand::InitializeController(control) => {}
-            StateCommand::DeleteController(control) => {}
+            StateCommand::InitializeController(control) => {
+                tx.send(match controllers[control].start_thread() {
+                    Ok(_c) => Ok(()),
+                    Err(e) => Err(StateError::ControllerError(e)),
+                })
+                .unwrap();
+            }
+            StateCommand::DeleteController(control) => {
+                tx.send(match controllers[control].stop_thread() {
+                    Ok(_c) => Ok(()),
+                    Err(e) => Err(StateError::ControllerError(e)),
+                })
+                .unwrap();
+            }
         }
 
         if *(continue_loop.lock().unwrap().get_mut()) {

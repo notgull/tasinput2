@@ -19,57 +19,27 @@
  */
 
 extern crate bindgen;
-extern crate futures;
-extern crate reqwest;
-extern crate tempfile;
-extern crate tokio;
 
-use std::io::Write;
 use std::{
     env,
-    fs::File,
     path::{Path, PathBuf},
 };
 
-// download file helper
-async fn download_file<'a>(
-    client: &'a reqwest::Client,
-    dir_path: &'a Path,
-    url: &'static str,
-) -> Result<PathBuf, Box<dyn std::error::Error>> {
-    let response = client.get(url).send().await?;
-
-    // get the out path
-    let fname = response
-        .url()
-        .path_segments()
-        .and_then(|segments| segments.last())
-        .and_then(|name| if name.is_empty() { None } else { Some(name) })
-        .unwrap_or("tmp.h");
-    let fname = dir_path.join(fname);
-    let mut dest = File::create(&fname)?;
-
-    dest.write_all(&response.bytes().await?)?;
-    Ok(fname)
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = reqwest::Client::new();
-    let tmp_dir = tempfile::Builder::new().prefix("m64p_headers").tempdir()?;
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let header_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("headers");
 
     // download mupen64 headers
-    let files = futures::join!(
-        download_file(&client, tmp_dir.path(), "https://raw.githubusercontent.com/mupen64plus/mupen64plus-core/master/src/api/m64p_plugin.h"),
-        download_file(&client, tmp_dir.path(), "https://raw.githubusercontent.com/mupen64plus/mupen64plus-core/master/src/api/m64p_config.h"),
-        download_file(&client, tmp_dir.path(), "https://raw.githubusercontent.com/mupen64plus/mupen64plus-core/master/src/api/m64p_types.h")
+    let files = (
+        header_dir.join("m64p_config.h"),
+        header_dir.join("m64p_plugin.h"),
+        header_dir.join("m64p_types.h")
     );
-
+ 
     // build with bindgen
     let bindings = bindgen::Builder::default()
-        .header(files.0.unwrap().to_str().unwrap())
-        .header(files.1.unwrap().to_str().unwrap())
-        .header(files.2.unwrap().to_str().unwrap())
+        .header(files.0.to_str().unwrap())
+        .header(files.1.to_str().unwrap())
+        .header(files.2.to_str().unwrap())
         .generate()
         .unwrap();
 

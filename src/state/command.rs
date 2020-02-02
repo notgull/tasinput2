@@ -29,7 +29,7 @@ pub enum StateCommand {
     /// Quit QT thread
     EndQT,
     /// Initialize a new controller
-    InitializeController(u8),
+    InitializeController(usize),
     /// De-initialize a controller
-    DeleteController(u8),
+    DeleteController(usize),
 }

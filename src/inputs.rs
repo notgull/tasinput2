@@ -18,7 +18,10 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::convert::{Into, TryInto};
+use std::{
+    convert::TryInto,
+    os::raw::c_int,
+};
 
 /// Directional buttons
 pub struct Directional {
@@ -226,5 +229,37 @@ impl Inputs {
         let x = get_byte(value, 2) as i8;
         let y = get_byte(value, 3) as i8;
         Self::with_directionals(x, y, a, b, z, l, r, start, c, d)
+    }
+
+    /// Convert to a canonical representation with m64p_sys
+    pub fn to_canonical(&self) -> m64p_sys::BUTTONS {
+        macro_rules! cify_bool {
+            ($val: expr) => {
+                if $val { 1 } else { 0 }
+            }
+        };
+
+        m64p_sys::BUTTONS {
+            _bitfield_1: m64p_sys::BUTTONS::new_bitfield_1(
+                cify_bool!(self.d.right),
+                cify_bool!(self.d.left),
+                cify_bool!(self.d.down),
+                cify_bool!(self.d.up),
+                cify_bool!(self.start),
+                cify_bool!(self.z),
+                cify_bool!(self.b),
+                cify_bool!(self.a),
+                cify_bool!(self.c.right),
+                cify_bool!(self.c.left),
+                cify_bool!(self.c.down),
+                cify_bool!(self.c.up),
+                cify_bool!(self.r),
+                cify_bool!(self.l),
+                0,
+                0,
+                self.x as c_int,
+                self.y as c_int
+            )
+        }
     }
 }

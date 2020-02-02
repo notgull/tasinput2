@@ -32,3 +32,4 @@ mod bindings {
 }
 
 pub use bindings::*;
+pub use bindings::BUTTONS__bindgen_ty_1 as BUTTONS;

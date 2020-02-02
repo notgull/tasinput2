@@ -38,8 +38,7 @@ impl Write for Debugger {
             let mut v = e.into_vec();
             v.retain(|x| *x != 0);
 
-            #[allow(clippy::or_fun_call)]
-            CString::new(v).unwrap_or(CString::new("Unable to process error").unwrap())
+            CString::new(v).unwrap_or_else(|_| CString::new("Unable to process error").unwrap())
         });
 
         // if we can't get a lock on either mutex, print error to eprint instead
@@ -77,7 +76,7 @@ lazy_static! {
 
 // internal use printing function
 #[doc(hidden)]
-pub fn _dprint(args: fmt::Arguments) {
+pub fn _dprint(args: fmt::Arguments<'_>) {
     let mut dlock = match DEBUG_OUT.lock() {
         Ok(dl) => dl,
         Err(_) => {

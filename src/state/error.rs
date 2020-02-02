@@ -19,6 +19,7 @@
  */
 
 use super::StateCommand;
+use crate::controller::ControllerError;
 use std::sync::{
     atomic::AtomicBool,
     mpsc::{RecvError, SendError},
@@ -47,4 +48,6 @@ pub enum StateError {
     ThreadHandleNonexistant,
     #[error("Unable to join thread")]
     ThreadJoinPanic,
+    #[error("An error occurred with the controllers")]
+    ControllerError(#[from] ControllerError),
 }
