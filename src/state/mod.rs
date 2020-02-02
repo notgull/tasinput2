@@ -26,12 +26,12 @@ use qt_widgets::{qt_core::QCoreApplication, qt_gui::QGuiApplication};
 use std::{
     ffi::c_void,
     sync::{
-        atomic::{AtomicBool, AtomicPtr},
         mpsc::{self, Receiver, Sender},
         Arc, Mutex,
     },
     thread::{self, JoinHandle},
 };
+
 
 pub use command::StateCommand;
 pub use error::StateError;
@@ -69,7 +69,7 @@ fn state_manager(tx: Sender<Result<(), StateError>>, rx: Receiver<StateCommand>)
             StateCommand::StartQT => {
                 if !(unsafe { QCoreApplication::instance().is_null() }) {
                     tx.send(Err(StateError::QtOpen)).unwrap();
-                } else {
+               } else {
                     unsafe {
                         QGuiApplication::exec();
                     }
@@ -119,7 +119,6 @@ impl Tasinput2State {
     // send a command to the thread
     fn send_cmd(&self, command: StateCommand) -> Result<(), StateError> {
         self.tx.send(command)?;
-
         match self.rx.recv() {
             Ok(Ok(())) => Ok(()),
             Ok(Err(e)) => Err(e),
@@ -145,7 +144,7 @@ impl Tasinput2State {
 
         *self.context.lock().unwrap() = None;
         self.send_cmd(StateCommand::End)?;
-        match self.handle.take() {
+        
             Some(handle) => match handle.join() {
                 Ok(_) => {
                     self.handle = None;

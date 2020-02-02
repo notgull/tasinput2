@@ -35,13 +35,14 @@ pub fn controller_manager(tx: Sender<ControllerResponse>, rx: Receiver<Controlle
         let break_loop = |_| {
             let cloned_continue_loop = Rc::clone(&continue_loop);
             let mut lock = cloned_continue_loop.lock().unwrap();
+
             let data = lock.get_mut();
-            *data = false;
+                * data = false;
         };
 
         // receive the command from the receiving outlet
         #[allow(deprecated)]
-        match rx.recv().unwrap_or(ControllerCommand::NoOp) {
+            match rx.recv().unwrap_or(ControllerCommand::NoOp) {
             #[allow(deprecated)]
             ControllerCommand::NoOp => tx
                 .send(ControllerResponse::NoResponse)

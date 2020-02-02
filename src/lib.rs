@@ -29,6 +29,7 @@ extern crate qt_widgets;
 extern crate thiserror;
 
 mod controller;
+
 #[macro_use]
 mod debug;
 mod gui;
@@ -38,7 +39,6 @@ mod state;
 use std::{
     ffi::{c_void, CString},
     os::raw::c_char,
-    ptr::null_mut,
     sync::{
         atomic::{AtomicBool, AtomicPtr},
         Arc,
@@ -144,6 +144,49 @@ pub unsafe extern "C" fn PluginStartup(
     m64p_sys::m64p_error_M64ERR_SUCCESS
 }
 
+/// Put the DLL's information into a plugin information struct.
+///
+/// # Safety
+///
+/// This is called from C code, it is already unsafe.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub unsafe extern "C" fn PluginGetVersion(
+    plugin_type: *mut m64compat::m64p_plugin_type,
+    plugin_version: *mut i32,
+    api_version: *mut i32,
+    plugin_name: *mut *const c_char,
+    capabilities: *mut i32,
+) -> m64compat::m64p_error {
+    // an increment over the past version
+    if plugin_version.is_null() {
+        *plugin_version = 0x0200;
+    }
+
+    // indicate this is a controller plugin
+    if plugin_type.is_null() {
+        *plugin_type = m64compat::m64p_plugin_type_M64PLUGIN_INPUT;
+    }
+
+    // indicate the API version this expects
+    if api_version.is_null() {
+        *api_version = 0x020100;
+    }
+
+    // what capabilities does this plugin have?
+    if capabilities.is_null() {
+        *capabilities = 0;
+    }
+
+    // copy the version string into the plugin name
+    if plugin_name.is_null() {
+        let version = get_version_string();
+        *plugin_name = version.into_raw();
+    }
+
+    m64compat::m64p_error_M64ERR_SUCCESS
+}
+
 /// Close this DLL.
 ///
 /// # Safety
@@ -171,11 +214,11 @@ pub unsafe extern "C" fn PluginShutdown() -> m64p_sys::m64p_error {
     m64p_sys::m64p_error_M64ERR_SUCCESS
 }
 
-/// Process raw data sent to this controller.
+/// Process raw data sent to this controller. This is a No-op in the original TAS plugin and it is a no-op here too.
 ///
 /// # Safety
 ///
-/// Exclusively called from C code.
+/// This function does nothing that is unsafe, because it does nothing.
 #[allow(non_snake_case)]
 #[no_mangle]
 pub unsafe extern "C" fn ControllerCommand(_controllerNumber: i32, _data_pointer: *const u8) {}
