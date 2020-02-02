@@ -1,5 +1,5 @@
 [package]
-name = "m64p-sys"
+name = "m64p_sys"
 version = "0.1.0"
 authors = ["not_a_seagull <notaseagull048@gmail.com>"]
 edition = "2018"

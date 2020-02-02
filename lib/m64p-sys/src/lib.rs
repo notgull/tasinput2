@@ -18,6 +18,10 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+//! This library provides bindings for various parts of the plugin API for mupen64plus.
+//! 
+//! Ideally, this should be used to create plugins for mupen64plus using Rust.
+
 #[allow(clippy::all)]
 #[allow(dead_code)]
 #[allow(non_upper_case_globals)]

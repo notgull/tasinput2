@@ -18,29 +18,33 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::sync::{
-  atomic::AtomicBool,
-  mpsc::{RecvError, SendError},
-  PoisonError,
-};
 use super::StateCommand;
+use std::sync::{
+    atomic::AtomicBool,
+    mpsc::{RecvError, SendError},
+    PoisonError,
+};
 use thiserror::Error;
 
 /// An error that can occur in state operations.
-#[define(Debug, Error)]
+#[derive(Debug, Error)]
 pub enum StateError {
-  #[error("{0}")]
-  StaticMsg(&'static str),
-  #[error("An error occurred while sending information to a thread")]
-  SendError(#[from] SendError),
-  #[error("An error occurred while receiving information from the parent thread")]
-  RecvErrorPT(#[from] RecvError<StateCommand>),
-  #[error("An error occurred while receiving information from the child thread")]
-  RecvErrorCT(#[from] RecvError<()>),
-  #[error("Unable to access mutex containing atomic boolean")] 
-  Mutex(#[from] PoisonError<AtomicBool>),
-  #[error("QT is already open")]
-  QtOpen,
-  #[error("QT is already closed")]
-  QtClosed,
+    #[error("{0}")]
+    StaticMsg(&'static str),
+    #[error("An error occurred while receiving information from a thread")]
+    RecvError(#[from] RecvError),
+    #[error("An error occurred while sending information to the parent thread")]
+    SendErrorPT(#[from] SendError<StateCommand>),
+    #[error("An error occurred while sending information to the child thread")]
+    SendErrorCT(#[from] SendError<()>),
+    #[error("Unable to access mutex containing atomic boolean")]
+    Mutex(#[from] PoisonError<AtomicBool>),
+    #[error("QT is already open")]
+    QtOpen,
+    #[error("QT is already closed")]
+    QtClosed,
+    #[error("Thread handle does not exist")]
+    ThreadHandleNonexistant,
+    #[error("Unable to join thread")]
+    ThreadJoinPanic,
 }

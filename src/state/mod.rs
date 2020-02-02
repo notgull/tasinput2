@@ -24,8 +24,9 @@ mod error;
 use crate::{Controller, CONTROLLER_COUNT};
 use qt_widgets::{qt_core::QCoreApplication, qt_gui::QGuiApplication};
 use std::{
+    ffi::c_void,
     sync::{
-        atomic::AtomicBool,
+        atomic::{AtomicBool, AtomicPtr},
         mpsc::{self, Receiver, Sender},
         Arc, Mutex,
     },
@@ -52,7 +53,7 @@ fn terminate_qt() -> Result<(), StateError> {
 fn state_manager(tx: Sender<Result<(), StateError>>, rx: Receiver<StateCommand>) {
     let mut app_is_running = false;
     let continue_loop = Arc::new(Mutex::new(AtomicBool::new(true)));
-    let controllers: [Controller; CONTROLLER_COUNT] = Default::default();
+    let controllers: [Controller; CONTROLLER_COUNT as usize] = Default::default();
 
     'stateloop: loop {
         match rx.recv().unwrap() {
@@ -60,9 +61,9 @@ fn state_manager(tx: Sender<Result<(), StateError>>, rx: Receiver<StateCommand>)
             StateCommand::End => {
                 *(continue_loop.lock().unwrap()).get_mut() = false;
                 if let Err(e) = terminate_qt() {
-                  tx.send(Err(e)).unwrap();
+                    tx.send(Err(e)).unwrap();
                 } else {
-                  tx.send(Ok(())).unwrap();
+                    tx.send(Ok(())).unwrap();
                 }
             }
             StateCommand::StartQT => {
@@ -77,6 +78,8 @@ fn state_manager(tx: Sender<Result<(), StateError>>, rx: Receiver<StateCommand>)
                 }
             }
             StateCommand::EndQT => tx.send(terminate_qt()).unwrap(),
+            StateCommand::InitializeController(control) => {}
+            StateCommand::DeleteController(control) => {}
         }
 
         if *(continue_loop.lock().unwrap().get_mut()) {
@@ -87,8 +90,8 @@ fn state_manager(tx: Sender<Result<(), StateError>>, rx: Receiver<StateCommand>)
 
 /// Represents the current state of the program as a whole
 pub struct Tasinput2State {
-    ended: bool,
-    handle: JoinHandle<()>,
+    pub context: Arc<Mutex<Option<AtomicPtr<c_void>>>>,
+    handle: Option<JoinHandle<()>>,
     tx: Sender<StateCommand>,
     rx: Receiver<Result<(), StateError>>,
 }
@@ -99,14 +102,14 @@ impl Tasinput2State {
         let (tx1, rx1) = mpsc::channel();
         let (tx2, rx2) = mpsc::channel();
 
-        let handle = thread::spawn(move || {
+        let handle = Some(thread::spawn(move || {
             let tx = tx2;
             let rx = rx1;
             state_manager(tx, rx);
-        });
+        }));
 
         Tasinput2State {
-            ended: false,
+            context: Arc::new(Mutex::new(None)),
             handle,
             tx: tx1,
             rx: rx2,
@@ -114,34 +117,44 @@ impl Tasinput2State {
     }
 
     // send a command to the thread
-    fn send_cmd(&self, command: StateCommand) -> Result<(), StateCommand> {
+    fn send_cmd(&self, command: StateCommand) -> Result<(), StateError> {
         self.tx.send(command)?;
 
         match self.rx.recv() {
             Ok(Ok(())) => Ok(()),
             Ok(Err(e)) => Err(e),
-            Err(e) => Err(StateCommand::RecvErrorCT(e)),
+            Err(e) => Err(StateError::RecvError(e)),
         }
     }
 
     /// Start up QT
-    pub fn start_qt(&self) -> Result<(), StateCommand> {
+    pub fn start_qt(&self) -> Result<(), StateError> {
         self.send_cmd(StateCommand::StartQT)
     }
 
     /// End the QT context
-    pub fn end_qt(&self) -> Result<(), StateCommand> {
+    pub fn end_qt(&self) -> Result<(), StateError> {
         self.send_cmd(StateCommand::EndQT)
     }
 
     /// End the current loop
-    pub fn end(&mut self) -> Result<(), StateCommand> {
+    pub fn end(&mut self) -> Result<(), StateError> {
         if let Err(e) = self.end_qt() {
             eprintln!("Unable to end QT: {:?}... Proceeding anyways", e);
         }
 
-        self.ended = true;
-        self.send_cmd(StateCommand::End)
+        *self.context.lock().unwrap() = None;
+        self.send_cmd(StateCommand::End)?;
+        match self.handle.take() {
+            Some(handle) => match handle.join() {
+                Ok(_) => {
+                    self.handle = None;
+                    Ok(())
+                }
+                Err(_) => Err(StateError::ThreadJoinPanic),
+            },
+            None => Err(StateError::ThreadHandleNonexistant),
+        }
     }
 }
 

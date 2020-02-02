@@ -29,28 +29,32 @@ extern crate qt_widgets;
 extern crate thiserror;
 
 mod controller;
+#[macro_use]
+mod debug;
 mod gui;
 mod inputs;
-mod plugin_info;
 mod state;
 
 use std::{
     ffi::{c_void, CString},
-    ptr,
-    sync::{atomic::AtomicBool, Arc, Mutex},
+    os::raw::c_char,
+    ptr::null_mut,
+    sync::{
+        atomic::{AtomicBool, AtomicPtr},
+        Arc,
+        Mutex
+    },
 };
 
 pub use controller::*;
 pub use state::Tasinput2State;
-use std::os::raw::c_char;
-use std::ptr::null_mut;
 
 pub const CONTROLLER_COUNT: u32 = 4;
 
 lazy_static! {
     static ref IS_INITIALIZED: Arc<Mutex<AtomicBool>> =
         Arc::new(Mutex::new(AtomicBool::new(false)));
-    static ref STATE: Arc<Mutex<Tasinput2State>> = Arc::new(Mutex::new(Tasinput2State::new()));
+    pub static ref STATE: Arc<Mutex<Tasinput2State>> = Arc::new(Mutex::new(Tasinput2State::new()));
 }
 
 // the only safe part of the dll info: parsing the string
@@ -87,7 +91,7 @@ pub unsafe extern "C" fn PluginGetVersion(
 
     // indicate this is a controller plugin
     if plugin_type.is_null() {
-        *plugin_type = m64compat::m64p_plugin_type_M64PLUGIN_INPUT;
+        *plugin_type = m64p_sys::m64p_plugin_type_M64PLUGIN_INPUT;
     }
 
     // indicate the API version this expects
@@ -118,14 +122,20 @@ pub unsafe extern "C" fn PluginGetVersion(
 #[no_mangle]
 pub unsafe extern "C" fn PluginStartup(
     core_lib_handle: m64p_sys::m64p_dynlib_handle,
-    context: *const c_void,
-    debug_callback: unsafe extern "C" fn(*const c_void, i32, *const c_char),
+    context: *mut c_void,
+    debug_callback: unsafe extern "C" fn(*mut c_void, m64p_sys::m64p_msg_level, *const c_char),
 ) -> m64p_sys::m64p_error {
-    let is_started: &mut bool = IS_INITIALIZED.lock().unwrap().get_mut();
+    let mut lock = IS_INITIALIZED.lock().unwrap();
+    let is_started: &mut bool = lock.get_mut();
     if *is_started {
         return m64p_sys::m64p_error_M64ERR_ALREADY_INIT;
     }
     *is_started = true;
+
+    let mut lock = STATE.lock().unwrap();
+    *(*lock).context.lock().unwrap() = Some(AtomicPtr::new(context));
+
+    *debug::DEBUG_OUT.lock().unwrap() = Some(debug::Debugger { debug_fn: debug_callback });
 
     if let Err(e) = STATE.lock().unwrap().start_qt() {
         eprintln!("Unable to start QT: {:?}", e);
@@ -142,7 +152,8 @@ pub unsafe extern "C" fn PluginStartup(
 #[allow(non_snake_case)]
 #[no_mangle]
 pub unsafe extern "C" fn PluginShutdown() -> m64p_sys::m64p_error {
-    let is_started: &mut bool = IS_INITIALIZED.lock().unwrap().get_mut();
+    let mut lock = IS_INITIALIZED.lock().unwrap();
+    let is_started: &mut bool = lock.get_mut();
     if !(*is_started) {
         return m64p_sys::m64p_error_M64ERR_NOT_INIT;
     }
@@ -151,6 +162,9 @@ pub unsafe extern "C" fn PluginShutdown() -> m64p_sys::m64p_error {
         eprintln!("tasinput2 error: {:?}", e);
         return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
     }
+
+    let mut state = STATE.lock().unwrap();
+    *(*state).context.lock().unwrap() = None;
 
     *is_started = false;
 
