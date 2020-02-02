@@ -88,7 +88,7 @@ pub unsafe extern "C" fn PluginStartup(
     *is_started = true;
 
     let mut lock = STATE.lock().unwrap();
-    *(*lock).context.lock().unwrap() = Some(AtomicPtr::new(context));
+    lock.context = Some(AtomicPtr::new(context));
 
     *debug::DEBUG_OUT.lock().unwrap() = Some(debug::Debugger {
         debug_fn: debug_callback,
@@ -162,9 +162,6 @@ pub unsafe extern "C" fn PluginShutdown() -> m64p_sys::m64p_error {
         eprintln!("tasinput2 error: {:?}", e);
         return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
     }
-
-    let mut state = STATE.lock().unwrap();
-    *(*state).context.lock().unwrap() = None;
 
     *is_started = false;
 

@@ -90,7 +90,7 @@ fn state_manager(tx: Sender<Result<(), StateError>>, rx: Receiver<StateCommand>)
 
 /// Represents the current state of the program as a whole
 pub struct Tasinput2State {
-    pub context: Arc<Mutex<Option<AtomicPtr<c_void>>>>,
+    pub context: Option<AtomicPtr<c_void>>,
     handle: Option<JoinHandle<()>>,
     tx: Sender<StateCommand>,
     rx: Receiver<Result<(), StateError>>,
@@ -109,7 +109,7 @@ impl Tasinput2State {
         }));
 
         Tasinput2State {
-            context: Arc::new(Mutex::new(None)),
+            context: None,
             handle,
             tx: tx1,
             rx: rx2,
@@ -142,7 +142,7 @@ impl Tasinput2State {
             eprintln!("Unable to end QT: {:?}... Proceeding anyways", e);
         }
 
-        *self.context.lock().unwrap() = None;
+        self.context = None;
         self.send_cmd(StateCommand::End)?;
         match self.handle.take() {
             Some(handle) => match handle.join() {

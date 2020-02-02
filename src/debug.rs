@@ -31,19 +31,35 @@ pub struct Debugger {
     pub debug_fn: unsafe extern "C" fn(*mut c_void, m64p_sys::m64p_msg_level, *const c_char),
 }
 
-// TODO: this could be rewritten with less unwraps()
 impl Write for Debugger {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         // convert string to a C string
-        let input = CString::new(s).unwrap();
+        let input = CString::new(s).unwrap_or_else(|e| {
+            let mut v = e.into_vec();
+            v.retain(|x| *x != 0);
+            CString::new(v).unwrap_or(CString::new("Unable to process error").unwrap())
+        });
 
-        let state_lock = STATE.lock().unwrap();
+        // if we can't get a lock on either mutex, print error to eprint instead
+        let mut state_lock = match STATE.lock() {
+            Ok(l) => l,
+            Err(_) => {
+                eprint!("State Unavailable: {}", s);
+                return Ok(());
+            }
+        };
+
+        let context = match state_lock.context {
+            Some(ref mut l) => l.get_mut(),
+            None => {
+                eprint!("Context Unavailable: {}", s);
+                return Ok(());
+            }
+        };
+
         unsafe {
             (self.debug_fn)(
-                *(*state_lock.context.lock().unwrap())
-                    .as_mut()
-                    .unwrap()
-                    .get_mut(),
+                *context,
                 m64p_sys::m64p_msg_level_M64MSG_ERROR,
                 input.into_raw(),
             );
@@ -62,7 +78,9 @@ lazy_static! {
 pub fn _dprint(args: fmt::Arguments) {
     let mut dlock = DEBUG_OUT.lock().unwrap();
     let lock = dlock.as_mut();
-    assert!(lock.is_some());
+    if lock.is_none() {
+        eprint!("{}", args);
+    }
     lock.unwrap().write_fmt(args).unwrap();
 }
 
