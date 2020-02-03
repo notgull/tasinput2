@@ -113,6 +113,20 @@ impl ControllerGui {
         }
     }
 
+    /// Show this controller GUI
+    pub fn show(&mut self) {
+        unsafe {
+            self.base_window.show();
+        }
+    }
+
+    /// Hide this controller GUI
+    pub fn hide(&mut self) {
+        unsafe {
+            self.base_window.hide();
+        }
+    }
+
     /// Provide an input
     pub fn get_inputs(&self) -> Inputs {
         unsafe {

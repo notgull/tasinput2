@@ -20,10 +20,13 @@
 
 use super::StateCommand;
 use crate::controller::ControllerError;
-use std::sync::{
-    atomic::AtomicBool,
-    mpsc::{RecvError, SendError},
-    PoisonError,
+use std::{
+    ffi::NulError,
+    sync::{
+        atomic::AtomicBool,
+        mpsc::{RecvError, SendError},
+        PoisonError,
+    },
 };
 use thiserror::Error;
 
@@ -50,4 +53,6 @@ pub enum StateError {
     ThreadJoinPanic,
     #[error("An error occurred with the controllers")]
     ControllerError(#[from] ControllerError),
+    #[error("Difficulties converting string to CString")]
+    String(#[from] NulError),
 }

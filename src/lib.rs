@@ -45,6 +45,7 @@ use std::{
 pub use controller::*;
 pub use inputs::{Directional, Inputs};
 pub use state::Tasinput2State;
+use std::convert::TryInto;
 
 pub const CONTROLLER_COUNT: u32 = 4;
 
@@ -116,9 +117,9 @@ pub unsafe extern "C" fn PluginStartup(
         if let Err(e) = lock.start_qt() {
             dprintln!("Unable to start QT: {:?}", e);
             return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
-        }
+        };
 
-        m64p_sys::m64p_error_M64ERR_SUCCESS
+        0
     }) {
         Ok(_) => m64p_sys::m64p_error_M64ERR_SUCCESS,
         Err(e) => {
@@ -167,9 +168,9 @@ pub unsafe extern "C" fn PluginGetVersion(
         if !plugin_name.is_null() {
             let version = get_version_string();
             *plugin_name = version.into_raw();
-        }
+        };
 
-        m64p_sys::m64p_error_M64ERR_SUCCESS
+        0
     }) {
         Ok(_) => m64p_sys::m64p_error_M64ERR_SUCCESS,
         Err(e) => {
@@ -215,7 +216,7 @@ pub unsafe extern "C" fn PluginShutdown() -> m64p_sys::m64p_error {
 
         *is_started = false;
 
-        m64p_sys::m64p_error_M64ERR_SUCCESS
+        0
     }) {
         Ok(_) => m64p_sys::m64p_error_M64ERR_SUCCESS,
         Err(e) => {
@@ -232,4 +233,148 @@ pub unsafe extern "C" fn PluginShutdown() -> m64p_sys::m64p_error {
 /// This function does nothing that is unsafe, because it does nothing.
 #[allow(non_snake_case)]
 #[no_mangle]
-pub unsafe extern "C" fn ControllerCommand(_controllerNumber: i32, _data_pointer: *const u8) {}
+pub unsafe extern "C" fn ControllerCommand(_controllerNumber: i32, _data_pointer: *mut c_char) {}
+
+/// Read raw data from a controller.
+///
+/// # Safety
+///
+/// This function does not do anything.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub unsafe extern "C" fn ReadController(_controller_number: i32, _data_pointer: *mut c_char) {}
+
+const WORKING_CTRL_COUNT: usize = 1;
+
+/// Initialize the set of controllers
+fn initialize_controllers() {
+    let state = STATE.lock().unwrap();
+    for i in 0usize..WORKING_CTRL_COUNT {
+        if let Err(e) = state.start_controller(i) {
+            dprintln!("Error initializing controller: {:?}", e);
+        }
+    }
+}
+
+/// Initialize a controller.
+///
+/// # Safety
+///
+/// This function is exclusively called from C code.
+///
+/// # TODO
+///
+/// Capture input.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub unsafe extern "C" fn InitiateControllers(_controller_info: m64p_sys::CONTROL_INFO) {
+    match catch_unwind(|| {
+        initialize_controllers();
+
+        0
+    }) {
+        Ok(_) => {}
+        Err(e) => dprintln!("Unable to initiate controllers: {:?}", e),
+    };
+}
+
+/// Called when a ROM is open.
+///
+/// # Safety
+///
+/// This functions is called exclusively from C code.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub unsafe extern "C" fn RomOpen() -> i32 {
+    match catch_unwind(|| {
+        initialize_controllers();
+        *STATE.lock().unwrap().romopen.get_mut() = true;
+
+        0
+    }) {
+        Ok(_) => 1,
+        Err(e) => {
+            dprintln!("Rom open failed: {:?}", e);
+            0
+        }
+    }
+}
+
+/// Called when the ROM is closed
+///
+/// # Safety
+///
+/// This functions is called exclusively from C code.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub unsafe extern "C" fn RomClosed() -> i32 {
+    match catch_unwind(|| {
+        let mut state = STATE.lock().unwrap();
+        for i in 1usize..WORKING_CTRL_COUNT {
+            if let Err(e) = state.stop_controller(i) {
+                dprintln!("Unable to stop controller thread: {}", e);
+            }
+        }
+        *state.romopen.get_mut() = false;
+
+        0
+    }) {
+        Ok(_) => 1,
+        Err(e) => {
+            dprintln!("Rom close failed: {:?}", e);
+            0
+        }
+    }
+}
+
+/// Pass an SDL signal through to the input.
+///
+/// # Safety
+///
+/// This function is called exclusively from C code.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub unsafe extern "C" fn SDL_KeyDown(_keymod: i32, _keysym: i32) {}
+
+/// Pass an SDL signal through to the input.
+///
+/// # Safety
+///
+/// This function is called exclusively from C code.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub unsafe extern "C" fn SDL_KeyUp(_keymod: i32, _keysym: i32) {}
+
+/// Pass the buttons into the emulator
+///
+/// # Safety
+///
+/// This functions is called exclusively from C code.
+#[allow(non_snake_case)]
+#[no_mangle]
+pub unsafe extern "C" fn GetKeys(controller_num: i32, output: *mut m64p_sys::BUTTONS) {
+    match catch_unwind(|| {
+        let state = STATE.lock().unwrap();
+        let index = match controller_num.try_into() {
+            Ok(i) => i,
+            Err(e) => {
+                dprintln!("Invalid index: {:?}", e);
+                return;
+            }
+        };
+
+        let buttons: Inputs = match state.get_inputs(index) {
+            Ok(i) => i,
+            Err(e) => {
+                dprintln!("Unable to retrieve inputs: {:?}", e);
+                return;
+            }
+        };
+        let buttons = buttons.to_canonical();
+
+        (*output)._bitfield_1 = buttons._bitfield_1;
+    }) {
+        Ok(_) => { },
+        Err(e) => dprintln!("Unable to get keys: {:?}", e)
+    }
+}

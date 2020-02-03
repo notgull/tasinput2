@@ -31,4 +31,8 @@ pub enum ControllerError {
     Recv(#[from] RecvError),
     #[error("An unspecified error occurred: {0}")]
     StaticMsg(&'static str),
+    #[error("Controller is not active")]
+    ControllerNotActive,
+    #[error("Unexpected enum mismatch")]
+    EnumMismatch,
 }

@@ -18,6 +18,7 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::Inputs;
 use qt_widgets::QWidget;
 use std::{
     sync::mpsc::{self, Receiver, Sender},
@@ -32,6 +33,7 @@ mod response;
 pub use command::ControllerCommand;
 pub use error::ControllerError;
 pub use response::ControllerResponse;
+use crate::state::StateError;
 
 /// Represents a controller's dialog box used to control inputs.
 pub struct Controller {
@@ -115,6 +117,19 @@ impl Controller {
         self.temp_rx = None;
 
         Ok(())
+    }
+
+    /// Get the inputs
+    pub fn get_inputs(&self) -> Result<Inputs, ControllerError> {
+        if !(self.is_active()) {
+            return Err(ControllerError::ControllerNotActive);
+        }
+
+        self.tx.send(ControllerCommand::GetInputs)?;
+        match self.rx.recv()? {
+            ControllerResponse::Inputs(i) => Ok(i),
+            _ => Err(ControllerError::EnumMismatch)
+        }
     }
 }
 

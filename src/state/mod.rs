@@ -21,10 +21,14 @@
 mod command;
 mod error;
 
-use crate::{Controller, CONTROLLER_COUNT};
-use qt_widgets::{qt_core::QCoreApplication, qt_gui::QGuiApplication};
+use crate::{Controller, CONTROLLER_COUNT, Inputs};
+use qt_widgets::{
+    cpp_core::{MutPtr, MutRef},
+    qt_core::QCoreApplication,
+    qt_gui::QGuiApplication,
+};
 use std::{
-    ffi::c_void,
+    ffi::{c_void, CString},
     sync::{
         atomic::{AtomicBool, AtomicPtr},
         mpsc::{self, Receiver, Sender},
@@ -33,64 +37,94 @@ use std::{
     thread::{self, JoinHandle},
 };
 
-pub use command::StateCommand;
+pub use command::{StateCommand, StateResponse};
 pub use error::StateError;
 
 // terminate the QT thread
-fn terminate_qt() -> Result<(), StateError> {
+fn terminate_qt() -> Result<StateResponse, StateError> {
     if unsafe { QCoreApplication::instance().is_null() } {
         Err(StateError::QtClosed)
     } else {
         unsafe {
             QCoreApplication::exit_0a();
         }
-        Ok(())
+        Ok(StateResponse::None)
+    }
+}
+
+// helper function to convert a vector of u8's into i8's
+fn vec_u8_to_i8(vec: Vec<u8>) -> Vec<i8> {
+    let mut v = std::mem::ManuallyDrop::new(vec);
+
+    // the various parts of the vector: pointer, len, and capacity
+    let p = v.as_mut_ptr();
+    let len = v.len();
+    let cap = v.capacity();
+
+    unsafe { Vec::from_raw_parts(p as *mut i8, len, cap) }
+}
+
+// start the QT thread
+fn start_qt() -> Result<StateResponse, StateError> {
+    if !(unsafe { QCoreApplication::instance().is_null() }) {
+        Err(StateError::QtOpen)
+    } else {
+        // generate the argv
+        let mut state_library = vec_u8_to_i8(CString::new("StaticLibrary")?.as_bytes().to_vec());
+        let state_library_pointer = unsafe { MutPtr::from_raw(&mut state_library.as_mut_ptr()) };
+        let mut one = 1;
+        let reference_to_one = unsafe { MutRef::from_raw_ref(&mut one) };
+
+        unsafe {
+            let _app = QGuiApplication::new_2a(reference_to_one, state_library_pointer);
+            QGuiApplication::exec();
+        }
+
+        std::mem::forget(state_library);
+        std::mem::forget(one);
+
+        Ok(StateResponse::None)
     }
 }
 
 // manager for the inner thread
 // TODO: remove unwraps
-fn state_manager(tx: Sender<Result<(), StateError>>, rx: Receiver<StateCommand>) {
-    let mut app_is_running = false;
+fn state_manager(tx: Sender<Result<StateResponse, StateError>>, rx: Receiver<StateCommand>) {
     let continue_loop = Arc::new(Mutex::new(AtomicBool::new(true)));
     let mut controllers: [Controller; CONTROLLER_COUNT as usize] = Default::default();
 
     'stateloop: loop {
         match rx.recv().unwrap() {
-            StateCommand::NoOp => tx.send(Ok(())).unwrap(),
+            StateCommand::NoOp => tx.send(Ok(StateResponse::None)).unwrap(),
             StateCommand::End => {
                 *(continue_loop.lock().unwrap()).get_mut() = false;
                 if let Err(e) = terminate_qt() {
                     tx.send(Err(e)).unwrap();
                 } else {
-                    tx.send(Ok(())).unwrap();
+                    tx.send(Ok(StateResponse::None)).unwrap();
                 }
             }
-            StateCommand::StartQT => {
-                if !(unsafe { QCoreApplication::instance().is_null() }) {
-                    tx.send(Err(StateError::QtOpen)).unwrap();
-                } else {
-                    unsafe {
-                        QGuiApplication::exec();
-                    }
-                    app_is_running = true;
-                    tx.send(Ok(())).unwrap();
-                }
-            }
+            StateCommand::StartQT => tx.send(start_qt()).unwrap(),
             StateCommand::EndQT => tx.send(terminate_qt()).unwrap(),
             StateCommand::InitializeController(control) => {
                 tx.send(match controllers[control].start_thread() {
-                    Ok(_c) => Ok(()),
+                    Ok(_c) => Ok(StateResponse::None),
                     Err(e) => Err(StateError::ControllerError(e)),
                 })
                 .unwrap();
             }
             StateCommand::DeleteController(control) => {
                 tx.send(match controllers[control].stop_thread() {
-                    Ok(_c) => Ok(()),
+                    Ok(_c) => Ok(StateResponse::None),
                     Err(e) => Err(StateError::ControllerError(e)),
                 })
                 .unwrap();
+            }
+            StateCommand::GetInputs(control) => {
+                tx.send(match controllers[control].get_inputs() {
+                    Ok(i) => Ok(StateResponse::Inputs(i)),
+                    Err(e) => Err(StateError::ControllerError(e)),
+                }).unwrap();
             }
         }
 
@@ -103,9 +137,10 @@ fn state_manager(tx: Sender<Result<(), StateError>>, rx: Receiver<StateCommand>)
 /// Represents the current state of the program as a whole
 pub struct Tasinput2State {
     pub context: Option<AtomicPtr<c_void>>,
+    pub romopen: AtomicBool,
     handle: Option<JoinHandle<()>>,
     tx: Sender<StateCommand>,
-    rx: Receiver<Result<(), StateError>>,
+    rx: Receiver<Result<StateResponse, StateError>>,
 }
 
 impl Tasinput2State {
@@ -122,6 +157,7 @@ impl Tasinput2State {
 
         Tasinput2State {
             context: None,
+            romopen: AtomicBool::new(false),
             handle,
             tx: tx1,
             rx: rx2,
@@ -132,7 +168,7 @@ impl Tasinput2State {
     fn send_cmd(&self, command: StateCommand) -> Result<(), StateError> {
         self.tx.send(command)?;
         match self.rx.recv() {
-            Ok(Ok(())) => Ok(()),
+            Ok(Ok(_)) => Ok(()),
             Ok(Err(e)) => Err(e),
             Err(e) => Err(StateError::RecvError(e)),
         }
@@ -151,7 +187,7 @@ impl Tasinput2State {
     /// End the current loop
     pub fn end(&mut self) -> Result<(), StateError> {
         if let Err(e) = self.end_qt() {
-            eprintln!("Unable to end QT: {:?}... Proceeding anyways", e);
+            dprintln!("Unable to end QT: {:?}... Proceeding anyways", e);
         }
 
         self.context = None;
@@ -165,6 +201,30 @@ impl Tasinput2State {
                 Err(_) => Err(StateError::ThreadJoinPanic),
             },
             None => Err(StateError::ThreadHandleNonexistant),
+        }
+    }
+
+    /// Start up a certain controller
+    pub fn start_controller(&self, control: usize) -> Result<(), StateError> {
+        self.send_cmd(StateCommand::InitializeController(control))
+    }
+
+    /// Shut down a certain controller
+    pub fn stop_controller(&self, control: usize) -> Result<(), StateError> {
+        self.send_cmd(StateCommand::DeleteController(control))
+    }
+
+    /// Get inputs for a certain controller.
+    pub fn get_inputs(&self, control: usize) -> Result<Inputs, StateError> {
+        /*if !(self.is_active()) {
+            return Err(StateError::StaticMsg("Already deactivated"));
+        }*/
+
+        self.tx.send(StateCommand::GetInputs(control))?;
+        match self.rx.recv()? {
+            Ok(StateResponse::Inputs(i)) => Ok(i),
+            Ok(_) => Err(StateError::StaticMsg("Unexpected enum variant")),
+            Err(e) => Err(e),
         }
     }
 }

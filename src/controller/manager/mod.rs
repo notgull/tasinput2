@@ -21,6 +21,7 @@
 mod gui;
 
 use super::{ControllerCommand, ControllerResponse};
+use gui::ControllerGui;
 use std::{
     rc::Rc,
     sync::{
@@ -32,6 +33,7 @@ use std::{
 
 pub fn controller_manager(tx: Sender<ControllerResponse>, rx: Receiver<ControllerCommand>) {
     let continue_loop = Rc::new(Mutex::new(AtomicBool::new(true)));
+    let mut cgui = ControllerGui::new();
 
     'threadloop: loop {
         let break_loop = |_| {
@@ -52,6 +54,20 @@ pub fn controller_manager(tx: Sender<ControllerResponse>, rx: Receiver<Controlle
             ControllerCommand::End => {
                 *(continue_loop.lock().unwrap().get_mut()) = false;
                 tx.send(ControllerResponse::NoResponse)
+                    .unwrap_or_else(break_loop);
+            }
+            ControllerCommand::ShowGUI => {
+                cgui.show();
+                tx.send(ControllerResponse::NoResponse)
+                    .unwrap_or_else(break_loop);
+            }
+            ControllerCommand::HideGUI => {
+                cgui.hide();
+                tx.send(ControllerResponse::NoResponse)
+                    .unwrap_or_else(break_loop);
+            }
+            ControllerCommand::GetInputs => {
+                tx.send(ControllerResponse::Inputs(cgui.get_inputs()))
                     .unwrap_or_else(break_loop);
             }
         }

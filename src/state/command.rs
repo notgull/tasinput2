@@ -18,6 +18,8 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::Inputs;
+
 /// A command to be sent to the application state.
 pub enum StateCommand {
     /// No operation.
@@ -32,4 +34,12 @@ pub enum StateCommand {
     InitializeController(usize),
     /// De-initialize a controller
     DeleteController(usize),
+    /// Get the inputs of a controller
+    GetInputs(usize),
+}
+
+/// Response to a command.
+pub enum StateResponse {
+    None,
+    Inputs(Inputs),
 }

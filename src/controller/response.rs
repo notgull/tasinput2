@@ -18,8 +18,12 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use crate::Inputs;
+
 /// A response to a controller command.
 pub enum ControllerResponse {
     /// No response required.
     NoResponse,
+    /// Send back inputs.
+    Inputs(Inputs),
 }

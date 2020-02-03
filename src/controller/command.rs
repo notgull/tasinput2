@@ -25,4 +25,10 @@ pub enum ControllerCommand {
     NoOp,
     /// End the current thread.
     End,
+    /// Show the controller GUI
+    ShowGUI,
+    /// Hide the controller GUI
+    HideGUI,
+    /// Get the controller's inputs
+    GetInputs,
 }

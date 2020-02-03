@@ -18,10 +18,7 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{
-    convert::TryInto,
-    os::raw::c_int,
-};
+use std::{convert::TryInto, os::raw::c_int};
 
 /// Directional buttons
 pub struct Directional {
@@ -235,8 +232,12 @@ impl Inputs {
     pub fn to_canonical(&self) -> m64p_sys::BUTTONS {
         macro_rules! cify_bool {
             ($val: expr) => {
-                if $val { 1 } else { 0 }
-            }
+                if $val {
+                    1
+                } else {
+                    0
+                }
+            };
         };
 
         m64p_sys::BUTTONS {
@@ -258,8 +259,8 @@ impl Inputs {
                 0,
                 0,
                 self.x as c_int,
-                self.y as c_int
-            )
+                self.y as c_int,
+            ),
         }
     }
 }
