@@ -138,8 +138,3 @@ impl Default for Controller {
         Self::new()
     }
 }
-
-pub struct ControllerData {
-    window: QWidget,
-    controller_id: u8,
-}

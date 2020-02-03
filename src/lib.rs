@@ -96,8 +96,19 @@ pub unsafe extern "C" fn PluginStartup(
                 return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
             }
         }) = Some(debug::Debugger {
+            context: AtomicPtr::new(context),
             debug_fn: debug_callback,
         });
+
+        dprintln!("Starting input plugin...");
+
+        let mut state_lock = match STATE.lock() {
+            Ok(l) => l,
+            Err(e) => {
+                dprintln!("Mutex error: {}", e);
+                return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
+            }
+        };
 
         let is_started: &mut bool = lock.get_mut();
         if *is_started {
@@ -105,16 +116,9 @@ pub unsafe extern "C" fn PluginStartup(
         }
         *is_started = true;
 
-        let mut lock = match STATE.lock() {
-            Ok(l) => l,
-            Err(e) => {
-                dprintln!("Mutex error: {}", e);
-                return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
-            }
-        };
-        lock.context = Some(AtomicPtr::new(context));
+        dprintln!("Starting qt...");
 
-        if let Err(e) = lock.start_qt() {
+        if let Err(e) = state_lock.start_qt() {
             dprintln!("Unable to start QT: {:?}", e);
             return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
         };

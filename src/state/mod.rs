@@ -76,8 +76,11 @@ fn start_qt() -> Result<StateResponse, StateError> {
         let reference_to_one = unsafe { MutRef::from_raw_ref(&mut one) };
 
         unsafe {
+            dprintln!("Creating app...");
             let _app = QGuiApplication::new_2a(reference_to_one, state_library_pointer);
+            dprintln!("Starting app...");
             QGuiApplication::exec();
+            dprintln!("App started...");
         }
 
         std::mem::forget(state_library);
@@ -136,7 +139,6 @@ fn state_manager(tx: Sender<Result<StateResponse, StateError>>, rx: Receiver<Sta
 
 /// Represents the current state of the program as a whole
 pub struct Tasinput2State {
-    pub context: Option<AtomicPtr<c_void>>,
     pub romopen: AtomicBool,
     handle: Option<JoinHandle<()>>,
     tx: Sender<StateCommand>,
@@ -156,7 +158,6 @@ impl Tasinput2State {
         }));
 
         Tasinput2State {
-            context: None,
             romopen: AtomicBool::new(false),
             handle,
             tx: tx1,
@@ -190,7 +191,6 @@ impl Tasinput2State {
             dprintln!("Unable to end QT: {:?}... Proceeding anyways", e);
         }
 
-        self.context = None;
         self.send_cmd(StateCommand::End)?;
         match self.handle.take() {
             Some(handle) => match handle.join() {

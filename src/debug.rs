@@ -23,11 +23,12 @@ use std::{
     ffi::{c_void, CString},
     fmt::{self, Write},
     os::raw::c_char,
-    sync::{Arc, Mutex},
+    sync::{atomic::AtomicPtr, Arc, Mutex},
 };
 
 /// Object that sends debug messages.
 pub struct Debugger {
+    pub context: AtomicPtr<c_void>,
     pub debug_fn: unsafe extern "C" fn(*mut c_void, m64p_sys::m64p_msg_level, *const c_char),
 }
 
@@ -41,26 +42,9 @@ impl Write for Debugger {
             CString::new(v).unwrap_or_else(|_| CString::new("Unable to process error").unwrap())
         });
 
-        // if we can't get a lock on either mutex, print error to eprint instead
-        let mut state_lock = match STATE.lock() {
-            Ok(l) => l,
-            Err(_) => {
-                eprint!("State Unavailable: {}", s);
-                return Ok(());
-            }
-        };
-
-        let context = match state_lock.context {
-            Some(ref mut l) => l.get_mut(),
-            None => {
-                eprint!("Context Unavailable: {}", s);
-                return Ok(());
-            }
-        };
-
         unsafe {
             (self.debug_fn)(
-                *context,
+                *self.context.get_mut(),
                 m64p_sys::m64p_msg_level_M64MSG_ERROR,
                 input.into_raw(),
             );
