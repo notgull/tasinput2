@@ -271,9 +271,10 @@ fn initialize_controllers() {
 /// Capture input.
 #[allow(non_snake_case)]
 #[no_mangle]
-pub unsafe extern "C" fn InitiateControllers(_controller_info: m64p_sys::CONTROL_INFO) {
+pub unsafe extern "C" fn InitiateControllers(controller_info: m64p_sys::CONTROL_INFO) {
     match catch_unwind(|| {
         initialize_controllers();
+        (*controller_info.Controls).Present = 1;
 
         0
     }) {

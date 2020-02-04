@@ -24,7 +24,7 @@ mod error;
 use crate::{Controller, CONTROLLER_COUNT, Inputs};
 use qt_widgets::{
     cpp_core::{MutPtr, MutRef},
-    qt_core::QCoreApplication,
+    qt_core::{QCoreApplication, Slot},
     qt_gui::QGuiApplication,
 };
 use std::{
@@ -76,11 +76,10 @@ fn start_qt() -> Result<StateResponse, StateError> {
         let reference_to_one = unsafe { MutRef::from_raw_ref(&mut one) };
 
         unsafe {
-            dprintln!("Creating app...");
             let _app = QGuiApplication::new_2a(reference_to_one, state_library_pointer);
-            dprintln!("Starting app...");
-            QGuiApplication::exec();
-            dprintln!("App started...");
+            thread::spawn(move || {
+                QGuiApplication::exec();
+            });
         }
 
         std::mem::forget(state_library);
