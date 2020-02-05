@@ -130,7 +130,7 @@ pub unsafe extern "C" fn PluginGetVersion(
     match catch_unwind(|| {
         // an increment over the past version
         if !plugin_version.is_null() {
-            *plugin_version = 0x10000; // NOTE: change this on new releases
+            *plugin_version = 0x10001; // NOTE: change this on new releases
         }
 
         // indicate this is a controller plugin
