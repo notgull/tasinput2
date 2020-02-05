@@ -116,8 +116,6 @@ impl<'a> Controller<'a> {
                     // label and spin box
                     let mut spin_label = QLabel::from_q_string(&QString::from_std_str($name));
                     let mut spin_box = QSpinBox::new_0a();
-                    spin_box.set_minimum(-127);
-                    spin_box.set_maximum(127);
 
                     container_layout.add_widget(&mut spin_box);
                     container_layout.add_widget(&mut spin_label);
@@ -128,6 +126,8 @@ impl<'a> Controller<'a> {
                     spin_box.into_ptr()*/
 
                     let mut spin_box = QSpinBox::new_0a();
+                    spin_box.set_minimum(-127);
+                    spin_box.set_maximum(127);
                     layout.add_widget(&mut spin_box);
                     spin_box.into_ptr()
                 }
