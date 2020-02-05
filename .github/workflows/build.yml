@@ -60,7 +60,7 @@ jobs:
        uses: jurplel/install-qt-action@v2
      - name: Install Qt (Linux)
        if: matrix.os == 'ubuntu-latest'
-       run: sudo apt install build-essential qt5-default
+       run: sudo apt install qt5-default
      - name: Install Qt (MacOS)
        if: matrix.os == 'macOS-latest'
        run: brew install qt5
