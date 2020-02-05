@@ -20,10 +20,7 @@
 
 use std::{
     ffi::NulError,
-    sync::{
-        atomic::AtomicBool,
-        PoisonError,
-    },
+    sync::{atomic::AtomicBool, PoisonError},
 };
 use thiserror::Error;
 

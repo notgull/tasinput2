@@ -26,7 +26,7 @@ use qt_widgets::{
 };
 use std::{
     convert::TryInto,
-    sync::{Arc, Mutex}
+    sync::{Arc, Mutex},
 };
 
 type Checkbox = MutPtr<QCheckBox>;
@@ -77,17 +77,18 @@ impl<'a> Controller<'a> {
     /// Instantiate a new controller
     pub fn new(input_reference: &'a Arc<Mutex<Inputs>>) -> Controller<'a> {
         let mut base_window = unsafe { QWidget::new_0a() };
+        unsafe { base_window.set_window_title(&QString::from_std_str("TAS Input")) };
         let mut layout = unsafe { QVBoxLayout::new_1a(&mut base_window).into_ptr() };
 
         // macro for creating a checkbox
         macro_rules! checkbox {
-            ($name: expr) => (
+            ($name: expr) => {
                 unsafe {
                     let mut cbox = QCheckBox::from_q_string(&QString::from_std_str($name));
                     layout.add_widget(&mut cbox);
                     cbox.into_ptr()
                 }
-            )
+            };
         };
 
         let a = checkbox!("A");
@@ -105,13 +106,12 @@ impl<'a> Controller<'a> {
         let d_down = checkbox!("D Down");
         let d_right = checkbox!("D Right");
 
-
         // macro for creating a spin box
         macro_rules! spinbox {
-            ($name: expr) => (
+            ($name: expr) => {
                 unsafe {
-                    let mut container = QWidget::new_0a();
-                    let mut container_layout = QHBoxLayout::new_1a(&mut container).into_ptr();
+                    /*let mut container = QWidget::new_0a();
+                    let mut container_layout = QHBoxLayout::new_0a();
 
                     // label and spin box
                     let mut spin_label = QLabel::from_q_string(&QString::from_std_str($name));
@@ -122,10 +122,16 @@ impl<'a> Controller<'a> {
                     container_layout.add_widget(&mut spin_box);
                     container_layout.add_widget(&mut spin_label);
 
+                    container.set_layout(container_layout.into_ptr());
+
                     layout.add_widget(&mut container);
+                    spin_box.into_ptr()*/
+
+                    let mut spin_box = QSpinBox::new_0a();
+                    layout.add_widget(&mut spin_box);
                     spin_box.into_ptr()
                 }
-            )
+            };
         }
 
         let x = spinbox!("X");
@@ -133,20 +139,20 @@ impl<'a> Controller<'a> {
 
         // macro for creating a slot that corresponds to a checkbox
         macro_rules! clicked_handler {
-            ($cbox: ident) => (
+            ($cbox: ident) => {
                 unsafe {
                     Slot::new(move || {
                         (*input_reference.lock().unwrap()).$cbox = $cbox.is_checked();
                     })
                 }
-            );
-            ($cbox: ident, $dname: ident.$pname: ident) => (
+            };
+            ($cbox: ident, $dname: ident.$pname: ident) => {
                 unsafe {
                     Slot::new(move || {
                         (*input_reference.lock().unwrap()).$dname.$pname = $cbox.is_checked();
                     })
                 }
-            )
+            };
         };
 
         let a_clicked = clicked_handler!(a);
@@ -169,15 +175,15 @@ impl<'a> Controller<'a> {
             ($field_name: ident) => {
                 unsafe {
                     Slot::new(move || {
-                        (*input_reference.lock().unwrap()).$field_name = $field_name.value().try_into().unwrap();
+                        (*input_reference.lock().unwrap()).$field_name =
+                            $field_name.value().try_into().unwrap();
                     })
                 }
-            }
+            };
         };
 
         let x_changed = changed_handler!(x);
         let y_changed = changed_handler!(y);
-
 
         unsafe { base_window.show() };
 
@@ -185,7 +191,22 @@ impl<'a> Controller<'a> {
             base_window,
             inputs: input_reference,
 
-            a, b, z, l, r, start, c_up, c_left, c_down, c_right, d_up, d_left, d_down, d_right, x, y,
+            a,
+            b,
+            z,
+            l,
+            r,
+            start,
+            c_up,
+            c_left,
+            c_down,
+            c_right,
+            d_up,
+            d_left,
+            d_down,
+            d_right,
+            x,
+            y,
 
             a_clicked,
             b_clicked,

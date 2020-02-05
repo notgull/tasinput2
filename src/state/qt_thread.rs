@@ -27,6 +27,8 @@ pub unsafe fn qt_thread(
     inputs: Arc<[Arc<Mutex<Inputs>>; CONTROLLER_COUNT]>,
 ) {
     QApplication::init(move |_| {
+        let mut controller_windows = Vec::new();
+
         // start up the controller windows
         //let mut controller_windows = [None; CONTROLLER_COUNT];
         for (i, do_init) in controllers.iter().enumerate() {
@@ -34,7 +36,7 @@ pub unsafe fn qt_thread(
                 continue;
             }
 
-            let _cntrler = Some(Controller::new(&inputs[i]));
+            controller_windows.push(Controller::new(&inputs[i]));
         }
 
         QApplication::exec()

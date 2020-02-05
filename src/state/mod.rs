@@ -34,6 +34,7 @@ pub use error::StateError;
 pub struct Tasinput2State {
     pub is_initialized: bool,
     pub is_rom_open: bool,
+    pub is_gui_open: bool,
     inputs: Arc<[Arc<Mutex<Inputs>>; CONTROLLER_COUNT]>,
     qt_thread: Option<JoinHandle<()>>,
 }
@@ -44,14 +45,17 @@ impl Tasinput2State {
         Tasinput2State {
             is_initialized: false,
             is_rom_open: false,
-            inputs: Arc::new(array_init::array_init(|_| Arc::new(Mutex::new(Inputs::from_value(0))))),
+            is_gui_open: false,
+            inputs: Arc::new(array_init::array_init(|_| {
+                Arc::new(Mutex::new(Inputs::from_value(0)))
+            })),
             qt_thread: None,
         }
     }
 
     /// Initialize the QT thread
     pub fn start_qt(&mut self, controllers: u8) -> Result<(), StateError> {
-        if !(unsafe { QCoreApplication::instance().is_null() }) {
+        if !(unsafe { QCoreApplication::instance().is_null() }) || self.is_gui_open {
             return Err(StateError::QtOpen);
         }
 
@@ -66,6 +70,8 @@ impl Tasinput2State {
         self.qt_thread = Some(thread::spawn(move || unsafe {
             qt_thread::qt_thread(controllers, inputs_cloned);
         }));
+
+        self.is_gui_open = true;
 
         Ok(())
     }
@@ -85,6 +91,7 @@ impl Tasinput2State {
             }
 
             self.qt_thread = None;
+            self.is_gui_open = false;
             Ok(())
         }
     }

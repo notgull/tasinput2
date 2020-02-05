@@ -284,7 +284,7 @@ pub unsafe extern "C" fn RomClosed() -> i32 {
     match catch_unwind(|| {
         let mut state = STATE.lock().unwrap();
         (*state).is_rom_open = false;
-        if let Err(e) =  state.end_qt() {
+        if let Err(e) = state.end_qt() {
             dprintln!("Unable to close QT: {:?}", e);
         }
 
