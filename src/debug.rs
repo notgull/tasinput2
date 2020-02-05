@@ -18,7 +18,6 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::STATE;
 use std::{
     ffi::{c_void, CString},
     fmt::{self, Write},

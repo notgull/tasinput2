@@ -1,5 +1,5 @@
 /*
- * src/controller/command.rs
+ * src/state/qt_thread.rs
  * tasinput2 - Plugin for creating TAS inputs
  *
  * This file is part of tasinput2.
@@ -18,17 +18,25 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/// Represents a command to be sent to and from the controller threads.
-pub enum ControllerCommand {
-    /// No command; shouldn't truly be used in practice.
-    #[deprecated(since = "0.1.0", note = "No-ops shouldn't be used in practice")]
-    NoOp,
-    /// End the current thread.
-    End,
-    /// Show the controller GUI
-    ShowGUI,
-    /// Hide the controller GUI
-    HideGUI,
-    /// Get the controller's inputs
-    GetInputs,
+use crate::{Controller, Inputs, CONTROLLER_COUNT};
+use qt_widgets::QApplication;
+use std::sync::{Arc, Mutex};
+
+pub unsafe fn qt_thread(
+    controllers: [bool; CONTROLLER_COUNT],
+    inputs: Arc<[Arc<Mutex<Inputs>>; CONTROLLER_COUNT]>,
+) {
+    QApplication::init(move |_| {
+        // start up the controller windows
+        //let mut controller_windows = [None; CONTROLLER_COUNT];
+        for (i, do_init) in controllers.iter().enumerate() {
+            if !do_init {
+                continue;
+            }
+
+            let _cntrler = Some(Controller::new(&inputs[i]));
+        }
+
+        QApplication::exec()
+    });
 }

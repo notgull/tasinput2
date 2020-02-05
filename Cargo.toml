@@ -10,8 +10,8 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+array-init = "0.1.1"
 lazy_static = "1.4.0"
-libc = "0.2.66"
 m64p_sys = { path = "lib/m64p-sys"}
 qt_widgets = "0.4.1"
 thiserror = "1.0.9"

@@ -18,13 +18,10 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use super::StateCommand;
-use crate::controller::ControllerError;
 use std::{
     ffi::NulError,
     sync::{
         atomic::AtomicBool,
-        mpsc::{RecvError, SendError},
         PoisonError,
     },
 };
@@ -35,12 +32,6 @@ use thiserror::Error;
 pub enum StateError {
     #[error("{0}")]
     StaticMsg(&'static str),
-    #[error("An error occurred while receiving information from a thread")]
-    RecvError(#[from] RecvError),
-    #[error("An error occurred while sending information to the parent thread")]
-    SendErrorPT(#[from] SendError<StateCommand>),
-    #[error("An error occurred while sending information to the child thread")]
-    SendErrorCT(#[from] SendError<()>),
     #[error("Unable to access mutex containing atomic boolean")]
     Mutex(#[from] PoisonError<AtomicBool>),
     #[error("QT is already open")]
@@ -51,8 +42,6 @@ pub enum StateError {
     ThreadHandleNonexistant,
     #[error("Unable to join thread")]
     ThreadJoinPanic,
-    #[error("An error occurred with the controllers")]
-    ControllerError(#[from] ControllerError),
     #[error("Difficulties converting string to CString")]
     String(#[from] NulError),
 }

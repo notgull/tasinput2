@@ -21,6 +21,7 @@
 use std::{convert::TryInto, os::raw::c_int};
 
 /// Directional buttons
+#[derive(Debug, Copy, Clone)]
 pub struct Directional {
     pub up: bool,
     pub down: bool,
@@ -41,6 +42,7 @@ impl Directional {
 }
 
 /// Inputs that can be retrieved from a controller object.
+#[derive(Debug, Copy, Clone)]
 pub struct Inputs {
     pub a: bool,
     pub b: bool,
@@ -262,5 +264,11 @@ impl Inputs {
                 self.y as c_int,
             ),
         }
+    }
+}
+
+impl Default for Inputs {
+    fn default() -> Inputs {
+        Inputs::from_value(0)
     }
 }

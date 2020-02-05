@@ -25,40 +25,35 @@
 #[macro_use]
 extern crate lazy_static;
 
-mod controller;
 #[doc(hidden)]
 #[macro_use]
 pub mod debug;
+mod controller;
 mod inputs;
 mod state;
 
 use std::{
+    convert::TryInto,
     ffi::{c_void, CString},
     os::raw::c_char,
     panic::catch_unwind,
-    sync::{
-        atomic::{AtomicBool, AtomicPtr},
-        Arc, Mutex,
-    },
+    sync::{atomic::AtomicPtr, Arc, Mutex},
 };
 
 pub use controller::*;
 pub use inputs::{Directional, Inputs};
 pub use state::Tasinput2State;
-use std::convert::TryInto;
 
-pub const CONTROLLER_COUNT: u32 = 4;
+pub const CONTROLLER_COUNT: usize = 4;
 
 lazy_static! {
-    static ref IS_INITIALIZED: Arc<Mutex<AtomicBool>> =
-        Arc::new(Mutex::new(AtomicBool::new(false)));
     pub static ref STATE: Arc<Mutex<Tasinput2State>> = Arc::new(Mutex::new(Tasinput2State::new()));
 }
 
 // the only safe part of the dll info: parsing the string
 #[cold]
 fn get_version_string() -> CString {
-    let plugin_name = concat!("TAS Input Plugin 2 v", env!("CARGO_PKG_VERSION"));
+    let plugin_name = "TAS Input Plugin 2 by not_a_seagull";
 
     // convert plugin name to a cstring
     CString::new(plugin_name).unwrap_or_else(|e| {
@@ -76,19 +71,11 @@ fn get_version_string() -> CString {
 #[allow(non_snake_case)]
 #[no_mangle]
 pub unsafe extern "C" fn PluginStartup(
-    core_lib_handle: m64p_sys::m64p_dynlib_handle,
+    _core_lib_handle: m64p_sys::m64p_dynlib_handle,
     context: *mut c_void,
     debug_callback: unsafe extern "C" fn(*mut c_void, m64p_sys::m64p_msg_level, *const c_char),
 ) -> m64p_sys::m64p_error {
     match catch_unwind(|| {
-        let mut lock = match IS_INITIALIZED.lock() {
-            Ok(l) => l,
-            Err(e) => {
-                eprintln!("Initialization error: {}", e);
-                return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
-            }
-        };
-
         *(match debug::DEBUG_OUT.lock() {
             Ok(l) => l,
             Err(e) => {
@@ -110,24 +97,17 @@ pub unsafe extern "C" fn PluginStartup(
             }
         };
 
-        let is_started: &mut bool = lock.get_mut();
-        if *is_started {
+        if (*state_lock).is_initialized {
+            dprintln!("Plugin is already initialized");
             return m64p_sys::m64p_error_M64ERR_ALREADY_INIT;
         }
-        *is_started = true;
-
-        dprintln!("Starting qt...");
-
-        if let Err(e) = state_lock.start_qt() {
-            dprintln!("Unable to start QT: {:?}", e);
-            return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
-        };
+        (*state_lock).is_initialized = true;
 
         0
     }) {
         Ok(_) => m64p_sys::m64p_error_M64ERR_SUCCESS,
         Err(e) => {
-            eprintln!("Panic occurred: {:?}", e);
+            dprintln!("Panic occurred during startup: {:?}", e);
             m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL
         }
     }
@@ -150,7 +130,7 @@ pub unsafe extern "C" fn PluginGetVersion(
     match catch_unwind(|| {
         // an increment over the past version
         if !plugin_version.is_null() {
-            *plugin_version = 0x0200;
+            *plugin_version = 0x10000; // NOTE: change this on new releases
         }
 
         // indicate this is a controller plugin
@@ -160,7 +140,7 @@ pub unsafe extern "C" fn PluginGetVersion(
 
         // indicate the API version this expects
         if !api_version.is_null() {
-            *api_version = 0x020100;
+            *api_version = 0x0002_0100;
         }
 
         // what capabilities does this plugin have?
@@ -178,7 +158,7 @@ pub unsafe extern "C" fn PluginGetVersion(
     }) {
         Ok(_) => m64p_sys::m64p_error_M64ERR_SUCCESS,
         Err(e) => {
-            dprintln!("Panic occurred: {:?}", e);
+            dprintln!("Panic occurred during versioning setup: {:?}", e);
             m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL
         }
     }
@@ -193,38 +173,33 @@ pub unsafe extern "C" fn PluginGetVersion(
 #[no_mangle]
 pub unsafe extern "C" fn PluginShutdown() -> m64p_sys::m64p_error {
     match catch_unwind(|| {
-        let mut lock = match IS_INITIALIZED.lock() {
+        let mut state = match STATE.lock() {
             Ok(l) => l,
             Err(e) => {
                 dprintln!("{:?}", e);
                 return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
             }
         };
-        let is_started: &mut bool = lock.get_mut();
-        if !(*is_started) {
+
+        if !((*state).is_initialized) {
             return m64p_sys::m64p_error_M64ERR_NOT_INIT;
         }
 
-        if let Err(e) = (*(match STATE.lock() {
+        *(match debug::DEBUG_OUT.lock() {
             Ok(l) => l,
             Err(e) => {
-                dprintln!("{:?}", e);
+                eprintln!("Unable to acquire debug lock: {}", e);
                 return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
             }
-        }))
-        .end()
-        {
-            eprintln!("tasinput2 error: {:?}", e);
-            return m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL;
-        }
+        }) = None;
 
-        *is_started = false;
+        (*state).is_initialized = false;
 
         0
     }) {
         Ok(_) => m64p_sys::m64p_error_M64ERR_SUCCESS,
         Err(e) => {
-            eprintln!("Panic occurred: {:?}", e);
+            eprintln!("Panic occurred during shutdown: {:?}", e);
             m64p_sys::m64p_error_M64ERR_SYSTEM_FAIL
         }
     }
@@ -248,17 +223,7 @@ pub unsafe extern "C" fn ControllerCommand(_controllerNumber: i32, _data_pointer
 #[no_mangle]
 pub unsafe extern "C" fn ReadController(_controller_number: i32, _data_pointer: *mut c_char) {}
 
-const WORKING_CTRL_COUNT: usize = 1;
-
-/// Initialize the set of controllers
-fn initialize_controllers() {
-    let state = STATE.lock().unwrap();
-    for i in 0usize..WORKING_CTRL_COUNT {
-        if let Err(e) = state.start_controller(i) {
-            dprintln!("Error initializing controller: {:?}", e);
-        }
-    }
-}
+const WORKING_CTRL_COUNT: u8 = 1;
 
 /// Initialize a controller.
 ///
@@ -273,7 +238,10 @@ fn initialize_controllers() {
 #[no_mangle]
 pub unsafe extern "C" fn InitiateControllers(controller_info: m64p_sys::CONTROL_INFO) {
     match catch_unwind(|| {
-        initialize_controllers();
+        let mut state = STATE.lock().unwrap();
+        if let Err(e) = (*state).start_qt(WORKING_CTRL_COUNT) {
+            dprintln!("Error initializing controllers: {}", e);
+        }
         (*controller_info.Controls).Present = 1;
 
         0
@@ -292,8 +260,8 @@ pub unsafe extern "C" fn InitiateControllers(controller_info: m64p_sys::CONTROL_
 #[no_mangle]
 pub unsafe extern "C" fn RomOpen() -> i32 {
     match catch_unwind(|| {
-        initialize_controllers();
-        *STATE.lock().unwrap().romopen.get_mut() = true;
+        let mut state = STATE.lock().unwrap();
+        (*state).is_rom_open = true;
 
         0
     }) {
@@ -315,12 +283,10 @@ pub unsafe extern "C" fn RomOpen() -> i32 {
 pub unsafe extern "C" fn RomClosed() -> i32 {
     match catch_unwind(|| {
         let mut state = STATE.lock().unwrap();
-        for i in 1usize..WORKING_CTRL_COUNT {
-            if let Err(e) = state.stop_controller(i) {
-                dprintln!("Unable to stop controller thread: {}", e);
-            }
+        (*state).is_rom_open = false;
+        if let Err(e) =  state.end_qt() {
+            dprintln!("Unable to close QT: {:?}", e);
         }
-        *state.romopen.get_mut() = false;
 
         0
     }) {
@@ -359,27 +325,22 @@ pub unsafe extern "C" fn SDL_KeyUp(_keymod: i32, _keysym: i32) {}
 #[no_mangle]
 pub unsafe extern "C" fn GetKeys(controller_num: i32, output: *mut m64p_sys::BUTTONS) {
     match catch_unwind(|| {
-        let state = STATE.lock().unwrap();
-        let index = match controller_num.try_into() {
+        // convert controller_num to a usize
+        let controller_num: usize = match controller_num.try_into() {
             Ok(i) => i,
             Err(e) => {
-                dprintln!("Invalid index: {:?}", e);
+                dprintln!("Unable to read controller index: {:?}", e);
                 return;
             }
         };
 
-        let buttons: Inputs = match state.get_inputs(index) {
-            Ok(i) => i,
-            Err(e) => {
-                dprintln!("Unable to retrieve inputs: {:?}", e);
-                return;
-            }
-        };
+        let state = STATE.lock().unwrap();
+        let buttons: Inputs = state.get_inputs(controller_num);
         let buttons = buttons.to_canonical();
 
         (*output)._bitfield_1 = buttons._bitfield_1;
     }) {
-        Ok(_) => { },
-        Err(e) => dprintln!("Unable to get keys: {:?}", e)
+        Ok(_) => {}
+        Err(e) => dprintln!("Unable to get keys: {:?}", e),
     }
 }
