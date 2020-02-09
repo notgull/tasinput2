@@ -36,6 +36,8 @@ pub unsafe fn qt_thread(
                 continue;
             }
 
+            dprintln!("Creating controller #{}", i);
+
             controller_windows.push(Controller::new(&inputs[i]));
         }
 

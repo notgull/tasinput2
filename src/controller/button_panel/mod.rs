@@ -23,15 +23,16 @@ mod directional;
 pub use super::Checkbox;
 
 use crate::Inputs;
-use directional::{DirectionalWidget, DirectionalType};
+use directional::{DirectionalType, DirectionalWidget};
 use qt_widgets::{
     cpp_core::{CppBox, MutPtr},
     qt_core::{QString, Slot},
-    QWidget, QCheckBox, QHBoxLayout, QVBoxLayout
+    QCheckBox, QHBoxLayout, QVBoxLayout, QWidget,
 };
 use std::sync::{Arc, Mutex};
 
 /// The panel used for buttons.
+#[allow(dead_code)]
 pub struct ButtonPanel<'a> {
     pub container: CppBox<QWidget>,
     inputs: &'a Arc<Mutex<Inputs>>,
@@ -99,14 +100,22 @@ impl<'a> ButtonPanel<'a> {
             container,
             inputs: input_reference,
 
-            a, b, z, l, r, start, c, d, m_box: unsafe { m_box.into_ptr() },
+            a,
+            b,
+            z,
+            l,
+            r,
+            start,
+            c,
+            d,
+            m_box: unsafe { m_box.into_ptr() },
 
             a_clicked,
             b_clicked,
             z_clicked,
             l_clicked,
             r_clicked,
-            start_clicked
+            start_clicked,
         };
 
         unsafe {

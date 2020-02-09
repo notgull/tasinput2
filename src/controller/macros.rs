@@ -48,3 +48,29 @@ macro_rules! clicked_handler {
         }
     };
 }
+
+// macro for creating a spin box
+#[macro_export]
+macro_rules! spinbox {
+    ($name: expr, $layout: ident) => {
+        unsafe {
+            let mut container = QWidget::new_0a();
+            let mut container_layout = QHBoxLayout::new_0a();
+
+            // label and spin box
+            let mut spin_label = QLabel::from_q_string(&QString::from_std_str($name));
+            let mut spin_box = QSpinBox::new_0a();
+
+            spin_box.set_minimum(-127);
+            spin_box.set_maximum(127);
+
+            container_layout.add_widget(&mut spin_box);
+            container_layout.add_widget(&mut spin_label);
+
+            container.set_layout(container_layout.into_ptr());
+
+            $layout.add_widget(&mut container);
+            (container.into_ptr(), spin_box.into_ptr())
+        }
+    };
+}

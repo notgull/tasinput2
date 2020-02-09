@@ -62,8 +62,8 @@ impl Tasinput2State {
         let controllers = [
             controllers & 1 != 0,
             controllers & 2 != 0,
-            controllers & 3 != 0,
             controllers & 4 != 0,
+            controllers & 8 != 0,
         ];
 
         let inputs_cloned = self.inputs.clone();

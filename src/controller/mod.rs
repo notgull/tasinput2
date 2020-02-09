@@ -21,9 +21,11 @@
 #[macro_use]
 mod macros;
 mod button_panel;
+mod joystick_panel;
 
-use button_panel::ButtonPanel;
 use crate::Inputs;
+use button_panel::ButtonPanel;
+use joystick_panel::JoystickPanel;
 use qt_widgets::{
     cpp_core::{CppBox, MutPtr},
     qt_core::{QString, Slot},
@@ -44,10 +46,7 @@ pub struct Controller<'a> {
     inputs: &'a Arc<Mutex<Inputs>>,
 
     buttons: ButtonPanel<'a>,
-    x: Spinbox,
-    y: Spinbox,
-    x_changed: Slot<'a>,
-    y_changed: Slot<'a>,
+    joystick: JoystickPanel<'a>,
 }
 
 impl<'a> Controller<'a> {
@@ -57,54 +56,11 @@ impl<'a> Controller<'a> {
         unsafe { base_window.set_window_title(&QString::from_std_str("TAS Input")) };
         let mut layout = unsafe { QVBoxLayout::new_1a(&mut base_window).into_ptr() };
 
+        let mut joystick = JoystickPanel::new(input_reference);
+        unsafe { layout.add_widget(joystick.container.as_mut_ptr()) };
+
         let mut buttons = ButtonPanel::new(input_reference);
         unsafe { layout.add_widget(buttons.container.as_mut_ptr()) };
-
-        // macro for creating a spin box
-        macro_rules! spinbox {
-            ($name: expr) => {
-                unsafe {
-                    /*let mut container = QWidget::new_0a();
-                    let mut container_layout = QHBoxLayout::new_0a();
-
-                    // label and spin box
-                    let mut spin_label = QLabel::from_q_string(&QString::from_std_str($name));
-                    let mut spin_box = QSpinBox::new_0a();
-
-                    container_layout.add_widget(&mut spin_box);
-                    container_layout.add_widget(&mut spin_label);
-
-                    container.set_layout(container_layout.into_ptr());
-
-                    layout.add_widget(&mut container);
-                    spin_box.into_ptr()*/
-
-                    let mut spin_box = QSpinBox::new_0a();
-                    spin_box.set_minimum(-127);
-                    spin_box.set_maximum(127);
-                    layout.add_widget(&mut spin_box);
-                    spin_box.into_ptr()
-                }
-            };
-        }
-
-        let x = spinbox!("X");
-        let y = spinbox!("Y");
-
-        // macro for creating a slot that corresponds to a spinbox
-        macro_rules! changed_handler {
-            ($field_name: ident) => {
-                unsafe {
-                    Slot::new(move || {
-                        (*input_reference.lock().unwrap()).$field_name =
-                            $field_name.value().try_into().unwrap();
-                    })
-                }
-            };
-        };
-
-        let x_changed = changed_handler!(x);
-        let y_changed = changed_handler!(y);
 
         unsafe { base_window.show() };
 
@@ -113,17 +69,7 @@ impl<'a> Controller<'a> {
             inputs: input_reference,
 
             buttons,
-
-            x,
-            y,
-
-            x_changed,
-            y_changed,
-        };
-
-        unsafe {
-            x.value_changed().connect(&controller.x_changed);
-            y.value_changed().connect(&controller.y_changed);
+            joystick,
         };
 
         controller

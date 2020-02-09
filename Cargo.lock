@@ -19,6 +19,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7825f6833612eb2414095684fcf6c635becf3ce97fe48cf6421321e93bfbd53c"
+
+[[package]]
 name = "array-init"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -151,12 +157,60 @@ dependencies = [
 ]
 
 [[package]]
+name = "codespan"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "21094c000d5db8035900662bbfddec754e79f795324254ac0817f36e5ccfc3f5"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
+name = "codespan-reporting"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "657b2c99e1f17bc3e5153808d9f704c8ba6171c3fe45e69fde26e2876156938b"
+dependencies = [
+ "codespan",
+ "termcolor",
+ "unicode-width",
+]
+
+[[package]]
 name = "cpp_core"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45167e54eb06975a7bcb7e218170f7c795e487f5f7c879d7bddcd092ead2db20"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "cxx"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42280cb638fa26ca5e2f5b007c5ad882751a16e0fbb2f8feaa66c9294c08798f"
+dependencies = [
+ "anyhow",
+ "cc",
+ "codespan",
+ "codespan-reporting",
+ "cxxbridge-macro",
+ "proc-macro2",
+ "quote",
+ "syn",
+ "thiserror",
+]
+
+[[package]]
+name = "cxxbridge-macro"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e9ab1dda819cfdf820f4a2c598ae8b33a1d54e49ef85ca314dd9368e64886ab"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -580,10 +634,13 @@ name = "tasinput2"
 version = "1.0.1"
 dependencies = [
  "array-init",
+ "cxx",
  "lazy_static",
+ "libc",
  "m64p_sys",
  "qt_widgets",
  "thiserror",
+ "winapi 0.3.8",
 ]
 
 [[package]]
@@ -660,6 +717,12 @@ checksum = "758664fc71a3a69038656bee8b6be6477d2a6c315a6b81f7081f591bffa4111f"
 dependencies = [
  "serde",
 ]
+
+[[package]]
+name = "unicode-segmentation"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e83e153d1053cbb5a118eeff7fd5be06ed99153f00dbcd8ae310c5fb2b22edc0"
 
 [[package]]
 name = "unicode-width"
