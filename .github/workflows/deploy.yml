@@ -38,25 +38,23 @@ jobs:
 
      - run: cargo build --release
      - name: Compress Project
-       run: |
-         7z a tasinput2.7z target/release/libtasinput2.dll
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-      - name: Upload Release Asset
-        id: upload-release-asset 
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: ./tasinput2.7z
-          asset_name: tasinput2-windows.7z
-          asset_content_type: application/x-7z-compressed
+       run: 7z a tasinput2.7z target/release/libtasinput2.dll
+     - name: Create Release
+       uses: actions/create-release@v1.0.0
+       env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       with:
+         tag_name: ${{ github.ref }}
+         release_name: Release ${{ github.ref }}
+         draft: false
+         prerelease: false
+     - name: Upload Release Asset
+       id: upload-release-asset 
+       uses: actions/upload-release-asset@v1.0.1
+       env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       with:
+         upload_url: ${{ steps.create_release.outputs.upload_url }} 
+         asset_path: ./tasinput2.7z
+         asset_name: tasinput2-windows.7z
+         asset_content_type: application/x-7z-compressed
