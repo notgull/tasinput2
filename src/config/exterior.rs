@@ -20,7 +20,7 @@
 
 //! Exterior functions for loading code configuration.
 
-use std::{ffi::CString, os::raw::c_char};
+use std::{ffi::CString, mem::transmute, os::raw::c_char};
 
 // load a dynamic procedure on linux
 #[cfg(not(windows))]
@@ -29,7 +29,7 @@ unsafe fn load_dynamic_procedure(
     proc_name: *const c_char,
 ) -> m64p_sys::m64p_function {
     // a binding to dlsym is contained in the libc crate
-    Some(libc::dlsym(core_lib_handle, proc_name))
+    Some(unsafe { transmute(libc::dlsym(core_lib_handle, proc_name)) })
 }
 
 // load a dynamic procedure on win32
@@ -82,37 +82,24 @@ pub struct ConfigureFunctions {
 impl ConfigureFunctions {
     /// Load all needed functions from the core library.
     pub fn new(lib: m64p_sys::m64p_dynlib_handle) -> ConfigureFunctions {
+        unsafe {
         ConfigureFunctions {
-            config_list_sections: load_dynamic_lib(lib, "ConfigListSections")
-                as m64p_sys::ptr_ConfigListSections,
-            config_open_section: load_dynamic_lib(lib, "ConfigOpenSection")
-                as m64p_sys::ptr_ConfigOpenSection,
-            config_delete_section: load_dynamic_lib(lib, "ConfigDeleteSection")
-                as m64p_sys::ptr_ConfigDeleteSection,
-            config_list_parameters: load_dynamic_lib(lib, "ConfigListParameters")
-                as m64p_sys::ptr_ConfigListParameters,
-            config_set_parameter: load_dynamic_lib(lib, "ConfigSetParameter")
-                as m64p_sys::ptr_ConfigSetParameter,
-            config_get_parameter: load_dynamic_lib(lib, "ConfigGetParameter")
-                as m64p_sys::ptr_ConfigGetParameter,
-            config_get_parameter_help: load_dynamic_lib(lib, "ConfigGetParameterHelp")
-                as m64p_sys::ptr_ConfigGetParameterHelp,
-            config_set_default_int: load_dynamic_lib(lib, "ConfigSetDefaultInt")
-                as m64p_sys::ptr_ConfigSetDefaultInt,
-            config_set_default_float: load_dynamic_lib(lib, "ConfigSetDefaultFloat")
-                as m64p_sys::ptr_ConfigSetDefaultFloat,
-            config_set_default_bool: load_dynamic_lib(lib, "ConfigSetDefaultBool")
-                as m64p_sys::ptr_ConfigSetDefaultBool,
-            config_set_default_string: load_dynamic_lib(lib, "ConfigSetDefaultString")
-                as m64p_sys::ptr_ConfigSetDefaultString,
-            config_get_param_int: load_dynamic_lib(lib, "ConfigGetParamInt")
-                as m64p_sys::ptr_ConfigGetParamInt,
-            config_get_param_float: load_dynamic_lib(lib, "ConfigGetParamFloat")
-                as m64p_sys::ptr_ConfigGetParamFloat,
-            config_get_param_bool: load_dynamic_lib(lib, "ConfigGetParamBool")
-                as m64p_sys::ptr_ConfigGetParamBool,
-            config_get_param_string: load_dynamic_lib(lib, "ConfigGetParamString")
-                as m64p_sys::ptr_ConfigGetParamString,
+            config_list_sections: transmute(load_dynamic_lib(lib, "ConfigListSections")),
+            config_open_section: transmute(load_dynamic_lib(lib, "ConfigOpenSection")),
+            config_delete_section: transmute(load_dynamic_lib(lib, "ConfigDeleteSection")),
+            config_list_parameters: transmute(load_dynamic_lib(lib, "ConfigListParameters")),
+            config_set_parameter: transmute(load_dynamic_lib(lib, "ConfigSetParameter")),
+            config_get_parameter: transmute(load_dynamic_lib(lib, "ConfigGetParameter")),
+            config_get_parameter_help: transmute(load_dynamic_lib(lib, "ConfigGetParameterHelp")),
+            config_set_default_int: transmute(load_dynamic_lib(lib, "ConfigSetDefaultInt")),
+            config_set_default_float: transmute(load_dynamic_lib(lib, "ConfigSetDefaultFloat")),
+            config_set_default_bool: transmute(load_dynamic_lib(lib, "ConfigSetDefaultBool")),
+            config_set_default_string: transmute(load_dynamic_lib(lib, "ConfigSetDefaultString")),
+            config_get_param_int: transmute(load_dynamic_lib(lib, "ConfigGetParamInt")),
+            config_get_param_float: transmute(load_dynamic_lib(lib, "ConfigGetParamFloat")),
+            config_get_param_bool: transmute(load_dynamic_lib(lib, "ConfigGetParamBool")),
+            config_get_param_string: transmute(load_dynamic_lib(lib, "ConfigGetParamString")),
+        }
         }
     }
 }
