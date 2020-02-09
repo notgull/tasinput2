@@ -22,9 +22,9 @@ use super::Spinbox;
 use crate::Inputs;
 use qt_widgets::{
     cpp_core::{CppBox, MutPtr},
+    q_frame::Shape,
     qt_core::{QString, Slot, SlotOfInt},
     qt_gui::{QBrush, QColor, QPainter, QPen},
-    q_frame::Shape,
     QFrame, QHBoxLayout, QLabel, QSpinBox, QVBoxLayout, QWidget,
 };
 use std::{
@@ -56,7 +56,7 @@ pub struct JoystickPanel<'a> {
 
     //    canvas_clicked: Slot<'a>,
     //    canvas_dragged: Slot<'a>,
-//    canvas_update: Slot<'a>,
+    //    canvas_update: Slot<'a>,
     x_value: Rc<RefCell<i8>>,
     y_value: Rc<RefCell<i8>>,
 }

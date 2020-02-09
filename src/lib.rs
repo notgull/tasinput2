@@ -28,7 +28,7 @@ extern crate lazy_static;
 #[doc(hidden)]
 #[macro_use]
 pub mod debug;
-mod config;
+//mod config;
 mod controller;
 mod inputs;
 mod state;
