@@ -4,6 +4,8 @@ This is essentially trying to do what tasinput did for mupen64-rr, and allow for
 
 ## Build/Install
 
+First, download the QT libraries. Then:
+
 ```sh
 $ git clone https://github.com/not-a-seagull/tasinput2.git && cd tasinput2
 $ cargo build --release
