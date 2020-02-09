@@ -22,17 +22,13 @@ jobs:
     strategy:
       matrix:
         toolchain: [stable, beta, nightly]
-        ttype: [Test, Lint, Deploy]
-        os: [windows-latest]
+        ttype: [Test, Lint]
+        os: [windows-latest, ubuntu-latest]
         exclude:
           - toolchain: beta
             ttype: 'Lint'
           - toolchain: nightly
             ttype: 'Lint'
-          - toolchain: beta
-            ttype: 'Deploy'
-          - toolchain: nightly
-            ttype: 'Deploy'
           - os: macOS-latest
             ttype: lint
           - os: windows-latest
@@ -78,9 +74,7 @@ jobs:
          Write-Output ("::set-env name=LIBCLANG_PATH::C:\ProgramData\scoop\apps\llvm\current\lib")
      - name: Install LLVM (MacOS)
        if: matrix.os == 'macOS-latest'
-       run: brew install llvm
-
-         
+       run: brew install llvm         
      
      # install clippy
      - name: Install Clippy
@@ -92,5 +86,3 @@ jobs:
        if: matrix.ttype == 'Test' && success()
      - run: cargo clippy
        if: matrix.ttype == 'Lint'
-     - run: cargo build --release
-       if: matrix.ttype == 'Deploy' && github.event_name == 'push'
