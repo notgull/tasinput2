@@ -23,7 +23,7 @@ jobs:
       matrix:
         toolchain: [stable, beta, nightly]
         ttype: [Test, Lint, Deploy]
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-latest]
         exclude:
           - toolchain: beta
             ttype: 'Lint'
