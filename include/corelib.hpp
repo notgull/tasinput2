@@ -21,8 +21,8 @@
 #ifndef TASINPUT2_CORELIB_HPP
 #define TASINPUT2_CORELIB_HPP
 
-#include "m64p/m64p_config.h"
 #include <cstdlib>
+#include "m64p/m64p_config.h"
 
 // pointers to necessary functions
 ptr_ConfigListSections _config_list_sections = nullptr;

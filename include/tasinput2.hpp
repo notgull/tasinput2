@@ -21,26 +21,29 @@
 #ifndef TASINPUT2_HPP
 #define TASINPUT2_HPP
 
-#include "m64p/m64p_types.h"
 #include "m64p/m64p_plugin.h"
+#include "m64p/m64p_types.h"
 #include <mutex>
 
+std::mutex& get_lock();
+
 extern "C" {
-typedef void (*DebugCallback)(void *, int, const char *);
+typedef void (*DebugCallback)(void*, int, const char*);
 
 // fill out info regarding the plugin
-EXPORT m64p_error PluginGetVersion(m64p_plugin_type* plugin_type, int* plugin_version,
-                            int* api_version, const char** plugin_name,
-                            int* capabilities);
+EXPORT m64p_error PluginGetVersion(m64p_plugin_type* plugin_type,
+                                   int* plugin_version, int* api_version,
+                                   const char** plugin_name, int* capabilities);
 // start up the plugin
-EXPORT m64p_error PluginStartup(m64p_dynlib_handle core_handle, void *d_context, DebugCallback d_callback);
+EXPORT m64p_error PluginStartup(m64p_dynlib_handle core_handle, void* d_context,
+                                DebugCallback d_callback);
 
 // shut down the plugin
 EXPORT m64p_error PluginShutdown();
 
 // some no-op functions
-EXPORT void ControllerCommand(int ctrl_number, char *data_ptr);
-EXPORT void ReadController(int ctrl_number, char *data_ptr);
+EXPORT void ControllerCommand(int ctrl_number, char* data_ptr);
+EXPORT void ReadController(int ctrl_number, char* data_ptr);
 EXPORT void SDL_KeyDown(int keymod, int keysym);
 EXPORT void SDL_KeyUp(int keymod, int keysym);
 
