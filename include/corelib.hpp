@@ -1,5 +1,5 @@
 /*
- * lib/m64p-sys/src/lib.rs
+ * include/corelib.hpp
  * tasinput2 - Plugin for creating TAS inputs
  *
  * This file is part of tasinput2.
@@ -18,18 +18,17 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-//! This library provides bindings for various parts of the plugin API for mupen64plus.
-//! 
-//! Ideally, this should be used to create plugins for mupen64plus using Rust.
+#ifndef TASINPUT2_CORELIB_HPP
+#define TASINPUT2_CORELIB_HPP
 
-#[allow(clippy::all)]
-#[allow(dead_code)]
-#[allow(non_upper_case_globals)]
-#[allow(non_camel_case_types)]
-#[allow(non_snake_case)]
-mod bindings {
-    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-}
+#include "m64p/m64p_config.h"
+#include <cstdlib>
 
-pub use bindings::*;
-pub use bindings::BUTTONS__bindgen_ty_1 as BUTTONS;
+// pointers to necessary functions
+ptr_ConfigListSections _config_list_sections = nullptr;
+ptr_ConfigOpenSection _config_open_section = nullptr;
+ptr_ConfigDeleteSection _config_delete_section = nullptr;
+ptr_ConfigListParameters _config_list_parameters = nullptr;
+ptr_ConfigSetParameter _config_set_parameter = nullptr;
+
+#endif

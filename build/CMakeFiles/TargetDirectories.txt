@@ -1,0 +1,5 @@
+/home/jtnunley/Programming/Projects/tasinput2/build/CMakeFiles/rebuild_cache.dir
+/home/jtnunley/Programming/Projects/tasinput2/build/CMakeFiles/edit_cache.dir
+/home/jtnunley/Programming/Projects/tasinput2/build/CMakeFiles/format.dir
+/home/jtnunley/Programming/Projects/tasinput2/build/CMakeFiles/tasinput2.dir
+/home/jtnunley/Programming/Projects/tasinput2/build/CMakeFiles/tasinput2_autogen.dir
