@@ -56,3 +56,4 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/version.h.in" "${TASINPUT2_I
 add_library(tasinput2 SHARED ${SOURCE_FILES})
 target_include_directories(tasinput2 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${TASINPUT2_INCLUDE2}")
 target_link_libraries(tasinput2 Qt5::Widgets)
+set_property(TARGET tasinput2 PROPERTY AUTOMOC ON)
