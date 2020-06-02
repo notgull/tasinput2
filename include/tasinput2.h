@@ -1,5 +1,5 @@
 /*
- * include/tasinput2.hpp
+ * include/tasinput2.h
  * tasinput2 - Plugin for creating TAS inputs
  *
  * This file is part of tasinput2.
@@ -18,17 +18,20 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef TASINPUT2_HPP
-#define TASINPUT2_HPP
+#ifndef TASINPUT2_H
+#define TASINPUT2_H
 
 #include "m64p/m64p_plugin.h"
 #include "m64p/m64p_types.h"
-#include <mutex>
 
-std::mutex& get_lock();
-
+#ifdef __cplusplus
 extern "C" {
+#endif
+
 typedef void (*DebugCallback)(void*, int, const char*);
+
+// print a message via the debug callback
+void debug_printf(int level, const char *format, ...);
 
 // fill out info regarding the plugin
 EXPORT m64p_error PluginGetVersion(m64p_plugin_type* plugin_type,
@@ -53,6 +56,9 @@ EXPORT void InitiateControllers(CONTROL_INFO controller_info);
 // open/close rom
 EXPORT int RomOpen();
 EXPORT int RomCloseD();
+
+#ifdef __cplusplus
 }
+#endif
 
 #endif

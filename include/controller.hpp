@@ -23,10 +23,12 @@
 
 #include <QCheckBox>
 #include <QWidget>
+#include <QSpinBox>
 #include "inputs.hpp"
 
 enum DirectionalType {DT_C,DT_D};
 
+// up/down/left/right object
 class DirectionalPanel : public QWidget {
     Q_OBJECT
   
@@ -49,20 +51,56 @@ class DirectionalPanel : public QWidget {
   explicit DirectionalPanel(QWidget *parent, DirectionalType ty, Inputs *inputs);
 };
 
+// panel that holds the buttons
 class ButtonPanel : public QWidget {
   Q_OBJECT
 
   private:
     QCheckBox *a;
     QCheckBox *b;
+    QCheckBox *z;
+    QCheckBox *l;
+    QCheckBox *r;
+    DirectionalPanel *c;
+    DirectionalPanel *d;
+    QCheckBox *start;
+
+    void a_checked();
+    void b_checked();
+    void z_checked();
+    void l_checked();
+    void r_checked();
+    void start_checked();
     
     Inputs *inputs;
   public:
     explicit ButtonPanel(QWidget *parent, Inputs *inputs);
 };
 
+// panel that holds the joysticks
+class JoystickPanel : public QWidget {
+  Q_OBJECT
+
+ private:
+  QSpinBox *x;
+  QSpinBox *y;
+
+  void x_changed(int val);
+  void y_changed(int val);
+
+  Inputs *inputs;
+
+ public:
+  explicit JoystickPanel(QWidget *parent, Inputs *inputs);
+};
+
+// window that holds it all
 class Controller : public QWidget {
   Q_OBJECT
+
+ private:
+  JoystickPanel *js;
+  ButtonPanel *bs;
 
  public:
   Inputs *inputs;

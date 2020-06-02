@@ -18,7 +18,7 @@
 
 cmake_minimum_required(VERSION 3.1.0)
 
-project(tasinput2 VERSION 0.2.0 LANGUAGES CXX)
+project(tasinput2 VERSION 0.2.0 LANGUAGES C CXX)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -30,12 +30,18 @@ endif ()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_FLAGS "-fPIC")
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
-file(GLOB SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/**/*.cpp")
+file(GLOB SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" 
+                       "${CMAKE_CURRENT_SOURCE_DIR}/src/**/*.cpp" 
+                       "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c" 
+                       "${CMAKE_CURRENT_SOURCE_DIR}/src/**/*.c")
 file(GLOB ALL_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp" 
-                           "${CMAKE_CURRENT_SOURCE_DIR}/include/**/*.hpp")
+                           "${CMAKE_CURRENT_SOURCE_DIR}/include/**/*.hpp"
+                           "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+                           "${CMAKE_CURRENT_SOURCE_DIR}/include/**/*.h")
 set(ALL_SOURCE_FILES ${ALL_SOURCE_FILES} ${SOURCE_FILES})
 
 add_custom_target(format 
@@ -45,8 +51,8 @@ add_custom_target(format
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 set(TASINPUT2_INCLUDE2 "${CMAKE_CURRENT_BINARY_DIR}/include")
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/version.hpp.in" "${TASINPUT2_INCLUDE2}/version.hpp")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/version.h.in" "${TASINPUT2_INCLUDE2}/version.h")
 
-add_library(tasinput2 STATIC ${SOURCE_FILES})
+add_library(tasinput2 SHARED ${SOURCE_FILES})
 target_include_directories(tasinput2 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${TASINPUT2_INCLUDE2}")
 target_link_libraries(tasinput2 Qt5::Widgets)
