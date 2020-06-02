@@ -32,16 +32,15 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-fPIC")
 
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
-
-file(GLOB SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" 
-                       "${CMAKE_CURRENT_SOURCE_DIR}/src/**/*.cpp" 
-                       "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c" 
-                       "${CMAKE_CURRENT_SOURCE_DIR}/src/**/*.c")
-file(GLOB ALL_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp" 
-                           "${CMAKE_CURRENT_SOURCE_DIR}/include/**/*.hpp"
-                           "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
-                           "${CMAKE_CURRENT_SOURCE_DIR}/include/**/*.h")
+set(SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/controller.cpp"
+                 "${CMAKE_CURRENT_SOURCE_DIR}/src/inputs.cpp"
+                 "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin.cpp"
+                 "${CMAKE_CURRENT_SOURCE_DIR}/src/tasinput2.c")
+set(ALL_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/controller.hpp" 
+                     "${CMAKE_CURRENT_SOURCE_DIR}/include/corelib.hpp"
+                     "${CMAKE_CURRENT_SOURCE_DIR}/include/plugin.h"
+                     "${CMAKE_CURRENT_SOURCE_DIR}/include/tasinput2.h"
+                     "${CMAKE_CURRENT_SOURCE_DIR}/include/version.h.in")
 set(ALL_SOURCE_FILES ${ALL_SOURCE_FILES} ${SOURCE_FILES})
 
 add_custom_target(format 
