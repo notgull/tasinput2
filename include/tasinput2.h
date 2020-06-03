@@ -31,7 +31,7 @@ extern "C" {
 typedef void (*DebugCallback)(void*, int, const char*);
 
 // print a message via the debug callback
-void debug_printf(int level, const char *format, ...);
+void debug_printf(int level, const char* format, ...);
 
 // fill out info regarding the plugin
 EXPORT m64p_error PluginGetVersion(m64p_plugin_type* plugin_type,

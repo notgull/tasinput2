@@ -22,16 +22,16 @@
 #define CONTROLLER_HPP
 
 #include <QCheckBox>
-#include <QWidget>
 #include <QSpinBox>
+#include <QWidget>
 #include "inputs.hpp"
 
-enum DirectionalType {DT_C,DT_D};
+enum DirectionalType { DT_C, DT_D };
 
 // up/down/left/right object
 class DirectionalPanel : public QWidget {
-    Q_OBJECT
-  
+  Q_OBJECT
+
  private:
   QCheckBox *up;
   QCheckBox *down;
@@ -39,42 +39,49 @@ class DirectionalPanel : public QWidget {
   QCheckBox *right;
   DirectionalType ty;
 
+ private slots:
   void up_checked();
   void down_checked();
   void left_checked();
   void right_checked();
+
+ private:
   Directional *get_directional();
 
   Inputs *inputs;
 
  public:
-  explicit DirectionalPanel(QWidget *parent, DirectionalType ty, Inputs *inputs);
+  explicit DirectionalPanel(QWidget *parent, DirectionalType ty,
+                            Inputs *inputs);
 };
 
 // panel that holds the buttons
 class ButtonPanel : public QWidget {
   Q_OBJECT
 
-  private:
-    QCheckBox *a;
-    QCheckBox *b;
-    QCheckBox *z;
-    QCheckBox *l;
-    QCheckBox *r;
-    DirectionalPanel *c;
-    DirectionalPanel *d;
-    QCheckBox *start;
+ private:
+  QCheckBox *a;
+  QCheckBox *b;
+  QCheckBox *z;
+  QCheckBox *l;
+  QCheckBox *r;
+  DirectionalPanel *c;
+  DirectionalPanel *d;
+  QCheckBox *start;
 
-    void a_checked();
-    void b_checked();
-    void z_checked();
-    void l_checked();
-    void r_checked();
-    void start_checked();
-    
-    Inputs *inputs;
-  public:
-    explicit ButtonPanel(QWidget *parent, Inputs *inputs);
+ private slots:
+  void a_checked();
+  void b_checked();
+  void z_checked();
+  void l_checked();
+  void r_checked();
+  void start_checked();
+
+ private:
+  Inputs *inputs;
+
+ public:
+  explicit ButtonPanel(QWidget *parent, Inputs *inputs);
 };
 
 // panel that holds the joysticks
@@ -85,9 +92,11 @@ class JoystickPanel : public QWidget {
   QSpinBox *x;
   QSpinBox *y;
 
+ private slots:
   void x_changed(int val);
   void y_changed(int val);
 
+ private:
   Inputs *inputs;
 
  public:

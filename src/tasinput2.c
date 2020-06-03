@@ -18,8 +18,8 @@
  * along with tasinput2.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "plugin.h"
 #include "tasinput2.h"
+#include "plugin.h"
 #include "version.h"
 
 #include <pthread.h>
@@ -38,13 +38,13 @@ DebugCallback debug_callback;
 void* debug_context;
 
 // printing messages via the debug callback
-void debug_printf(int level, const char *format, ...) {
+void debug_printf(int level, const char* format, ...) {
   char buffer[1024];
   va_list args;
 
   // set up the VA list
   va_start(args, format);
-  
+
   // if the debug callback is null, just print to stderr
   if (!debug_callback) {
     vfprintf(stderr, format, args);
@@ -53,19 +53,11 @@ void debug_printf(int level, const char *format, ...) {
 
   // otherwise, print to the buffer
   vsprintf(buffer, format, args);
- 
+
   // call the debug callback with the buffer
   (*debug_callback)(debug_context, level, buffer);
 
   va_end(args);
-}
-
-// get a string containing the version information
-char* get_version() {
-  const char* version_template = "TAS Input Plugin 2 by not_a_seagull";
-  char* res = (char*)malloc(sizeof(char) * (strlen(version_template) + 1));
-  strncpy(res, version_template, strlen(version_template));
-  return res;
 }
 
 // set up the plugin information
@@ -95,7 +87,7 @@ EXPORT m64p_error PluginGetVersion(m64p_plugin_type* plugin_type,
 
   // the name of our plugin
   if (plugin_name != NULL) {
-    *plugin_name = get_version();
+    *plugin_name = "TAS Input Plugin 2 by not_a_seagull";
   }
 
   return M64ERR_SUCCESS;
@@ -104,7 +96,7 @@ EXPORT m64p_error PluginGetVersion(m64p_plugin_type* plugin_type,
 // start up the plugin
 EXPORT m64p_error PluginStartup(m64p_dynlib_handle core_handle, void* d_context,
                                 DebugCallback d_callback) {
-  lock_mutex();
+//  lock_mutex();
 
   // if we're already initialized, throw an error
   if (is_init) {
@@ -119,13 +111,13 @@ EXPORT m64p_error PluginStartup(m64p_dynlib_handle core_handle, void* d_context,
   // TODO: corelib funcs
   // TODO: configuration and etc.
 
-  unlock_mutex();
+//  unlock_mutex();
   return M64ERR_SUCCESS;
 }
 
 // shut down the plugin
 EXPORT m64p_error PluginShutdown() {
-  lock_mutex();
+//  lock_mutex();
 
   if (!is_init) {
     unlock_mutex();
@@ -138,7 +130,7 @@ EXPORT m64p_error PluginShutdown() {
 
   // TODO: corelib: set funcs to null
 
-  unlock_mutex();
+//  unlock_mutex();
   return M64ERR_SUCCESS;
 }
 
@@ -150,7 +142,7 @@ EXPORT void SDL_KeyUp(int keymod, int keysym) {}
 
 // initialize the controllers and open the QT windows
 EXPORT void InitiateControllers(CONTROL_INFO controller_info) {
-  lock_mutex();
+//  lock_mutex();
   const uint32_t CONTROLLER_COUNT = 1;  // TODO: not this
 
   launch_controllers(CONTROLLER_COUNT);
@@ -158,28 +150,34 @@ EXPORT void InitiateControllers(CONTROL_INFO controller_info) {
   // todo: with configuration
   controller_info.Controls->Present = 1;
 
-  unlock_mutex();
+//  unlock_mutex();
 }
 
 // set the rom flag to open
 EXPORT int RomOpen() {
-  lock_mutex();
+//  lock_mutex();
   is_rom_open = true;
-  unlock_mutex();
+//  unlock_mutex();
 
   return 0;
 }
 
 // set the rom flag to closed and destroy the controllers
 EXPORT int RomClosed() {
-  lock_mutex();
+  if (!is_rom_open) {
+    debug_printf(M64MSG_WARNING,
+                 "Attempted to close ROM, even though no ROM was open.");
+    return 0;
+  }
+
+//  lock_mutex();
   is_rom_open = false;
 
   // destroy the application and merge the thread
-  deinit_controllers();  
- 
-  unlock_mutex();
-  
+  deinit_controllers();
+
+//  unlock_mutex();
+
   return 0;
 }
 

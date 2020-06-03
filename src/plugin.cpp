@@ -33,58 +33,75 @@
 #include <QApplication>
 #include <QCoreApplication>
 
-std::optional<std::thread> qt_thread;
+std::thread *qt_thread = nullptr;
 std::mutex lock;
 
 Controller *controllers[4] = {nullptr, nullptr, nullptr, nullptr};
 
 // lock/unlock the mutex
-void lock_mutex() {
-    lock.lock();
-}
+void lock_mutex() { lock.lock(); }
 
-void unlock_mutex() {
-    lock.unlock();
-}
+void unlock_mutex() { lock.unlock(); }
 
 // function to run in a seperate thread for QT purposes
 void _launch_controllers(uint32_t ctrls) {
-    char argv_orig[] = "tasinput2";
-    char *argv = argv_orig;
-    int argc = 1;
-    QApplication app(argc, &argv);
+  debug_printf(M64MSG_INFO, "Beginning controller launch");
 
-    // create controllers if needed
-    for (uint32_t i = 0; i < 4; i++) {
-        uint32_t cid = static_cast<uint32_t>(std::pow(2.0, static_cast<double>(i)));
+  char argv_orig[] = "tasinput2";
+  char *argv = argv_orig;
+  int argc = 1;
+  QApplication app(argc, &argv);
 
-        if (ctrls & cid) {
-            controllers[i] = new Controller();
-            controllers[i]->show();
-        }
+  // create controllers if needed
+  for (uint32_t i = 0; i < 4; i++) {
+    uint32_t cid = static_cast<uint32_t>(std::pow(2.0, static_cast<double>(i)));
+
+    if (ctrls & cid) {
+      controllers[i] = new Controller();
+      controllers[i]->show();
     }
+  }
 
-    app.exec();
+  app.exec();
 }
 
 // initialize the controllers
 void launch_controllers(uint32_t ctrls) {
-  qt_thread = std::optional(std::thread(_launch_controllers, ctrls));
+  try {
+    qt_thread = new std::thread(_launch_controllers, ctrls);
+  } catch (...) {
+    debug_printf(M64MSG_ERROR,
+                 "An error occurred while launching the QT windows");
+  }
 }
 
 // delete the controllers
 void deinit_controllers() {
-  QCoreApplication::quit();
-  qt_thread.value().join();
+  try {
+    debug_printf(M64MSG_INFO, "Destroying QT windows...");
 
-  for (int i = 0; i < 4; i++) {
-    if (controllers[i]) {
-      delete controllers[i];
+    QCoreApplication::quit();
+    if (qt_thread) {
+      qt_thread->join();
+      qt_thread = nullptr;
     }
+
+    for (int i = 0; i < 4; i++) {
+      if (controllers[i]) {
+        delete controllers[i];
+      }
+    }
+  } catch (...) {
+    debug_printf(M64MSG_ERROR,
+                 "An error occurred while closing the QT windows");
   }
 }
 
 // get the keys for a controller
 BUTTONS get_ctrl_keys(int ctrl_number) {
+  if (!controllers[ctrl_number]) {
+    return {0};
+  }
+
   return controllers[ctrl_number]->inputs->canonical_val();
 }

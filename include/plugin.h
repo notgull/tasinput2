@@ -1,5 +1,5 @@
 /*
- * include/plugin.h 
+ * include/plugin.h
  * tasinput2 - Plugin for creating TAS inputs
  *
  * This file is part of tasinput2.
